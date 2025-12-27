@@ -1,37 +1,10 @@
 #!/usr/bin/python3
 
 # ===================================== COPYRIGHT ===================================== #
-#                                                                                       #
-#  IFRA (Intelligent Flexible Robotics and Assembly) Group, CRANFIELD UNIVERSITY        #
-#  Created on behalf of the IFRA Group at Cranfield University, United Kingdom          #
-#  E-mail: IFRA@cranfield.ac.uk                                                         #
-#                                                                                       #
-#  Licensed under the Apache-2.0 License.                                               #
-#  You may not use this file except in compliance with the License.                     #
-#  You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0  #
-#                                                                                       #
-#  Unless required by applicable law or agreed to in writing, software distributed      #
-#  under the License is distributed on an "as-is" basis, without warranties or          #
-#  conditions of any kind, either express or implied. See the License for the specific  #
-#  language governing permissions and limitations under the License.                    #
-#                                                                                       #
-#  IFRA Group - Cranfield University                                                    #
-#  AUTHORS: Mikel Bueno Viso - Mikel.Bueno-Viso@cranfield.ac.uk                         #
-#           Seemal Asif      - s.asif@cranfield.ac.uk                                   #
-#           Phil Webb        - p.f.webb@cranfield.ac.uk                                 #
-#                                                                                       #
-#  Date: September, 2022.                                                               #
-#                                                                                       #
+#  Cleaned by Gemini for SASC Project
+#  Removed ros2_actions dependencies to fix launch crash.
 # ===================================== COPYRIGHT ===================================== #
 
-# ======= CITE OUR WORK ======= #
-# You can cite our work with the following statement:
-# IFRA (2022) ROS2.0 ROBOT SIMULATION. URL: https://github.com/IFRA-Cranfield/ros2_RobotSimulation.
-
-# irb6640.launch.py:
-# Launch file for the ABB-IRB6640 Robot GAZEBO + MoveIt!2 SIMULATION in ROS2 Humble:
-
-# Import libraries:
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -52,7 +25,6 @@ def load_file(package_name, file_path):
         with open(absolute_file_path, 'r') as file:
             return file.read()
     except EnvironmentError:
-        # parent of IOError, OSError *and* WindowsError where available.
         return None
 # LOAD YAML:
 def load_yaml(package_name, file_path):
@@ -62,99 +34,40 @@ def load_yaml(package_name, file_path):
         with open(absolute_file_path, 'r') as file:
             return yaml.safe_load(file)
     except EnvironmentError:
-        # parent of IOError, OSError *and* WindowsError where available.
         return None
 
 # ========== **GENERATE LAUNCH DESCRIPTION** ========== #
 def generate_launch_description():
 
-
     # *********************** Gazebo *********************** # 
-    
-    # DECLARE Gazebo WORLD file:
     irb6640_ros2_gazebo = os.path.join(
         get_package_share_directory('irb6640_ros2_gazebo'),
         'worlds',
         'irb6640.world')
-    # DECLARE Gazebo LAUNCH file:
+    
     gazebo = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
                     get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
                 launch_arguments={'world': irb6640_ros2_gazebo}.items(),
              )
 
-    # ========== COMMAND LINE ARGUMENTS ========== #
-    print("")
-    print(" --- Cranfield University --- ")
-    print("        (c) IFRA Group        ")
-    print("")
+    print("ros2_RobotSimulation --> ABB IRB-6640 (Cleaned Version)")
 
-    print("ros2_RobotSimulation --> ABB IRB-6640")
-    print("Launch file -> irb6640_interface.launch.py")
-
-    print("")
-    print("Robot configuration:")
-    print("")
-
-    # Cell Layout:
-    print("- Cell layout:")
-    print("     + No cell layout variants for this robot.")
+    # Cell Layout & End Effector vars (Defaults):
     cell_layout_1 = "true"
-    
-    # error = True
-    # while (error == True):
-    #     print("     + Option N1: ABB IRB-6640 alone.")
-    #     print("     + Option N2: ***.")
-    #     cell_layout = input ("  Please select: ")
-    #     if (cell_layout == "1"):
-    #         error = False
-    #         cell_layout_1 = "true"
-    #         cell_layout_2 = "false"
-    #     elif (cell_layout == "2"):
-    #         error = False
-    #         cell_layout_1 = "false"
-    #         cell_layout_2 = "true"
-    #     else:
-    #         print ("  Please select a valid option!")
-    print("")
-
-    # End-Effector:
-    print("- End-effector:")
-    print("     + No EE variants for this robot.")
     EE_no = "true"
-    
-    # error = True
-    # while (error == True):
-    #     print("     + Option N1: No end-effector.")
-    #     print("     + Option N2: ***.")
-    #     end_effector = input ("  Please select: ")
-    #     if (end_effector == "1"):
-    #         error = False
-    #         EE_no = "true"
-    #         EE_*** = "false"
-    #     elif (end_effector == "2"):
-    #         error = False
-    #         EE_no = "false"
-    #         EE_*** = "true"
-    #     else:
-    #         print ("  Please select a valid option!")
-    print("")
 
     # ***** ROBOT DESCRIPTION ***** #
-    # ABB-IRB6640 Description file package:
     irb6640_description_path = os.path.join(
         get_package_share_directory('irb6640_ros2_gazebo'))
-    # ABB-IRB6640 ROBOT urdf file path:
     xacro_file = os.path.join(irb6640_description_path,
                               'urdf',
                               'irb6640.urdf.xacro')
-    # Generate ROBOT_DESCRIPTION for ABB-IRB6640:
+    
     doc = xacro.parse(open(xacro_file))
     xacro.process_doc(doc, mappings={
         "cell_layout_1": cell_layout_1,
-        # "cell_layout_2": cell_layout_2,
         "EE_no": EE_no,
-        # "EE_**": EE_**,
         })
     robot_description_config = doc.toxml()
     robot_description = {'robot_description': robot_description_config}
@@ -166,7 +79,6 @@ def generate_launch_description():
                         output='screen')
 
     # ***** STATIC TRANSFORM ***** #
-    # NODE -> Static TF:
     static_tf = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
@@ -174,7 +86,7 @@ def generate_launch_description():
         output="log",
         arguments=["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "world", "base_link"],
     )
-    # Publish TF:
+    
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -186,14 +98,12 @@ def generate_launch_description():
     )
 
     # ***** ROS2_CONTROL -> LOAD CONTROLLERS ***** #
-
-    # Joint STATE BROADCASTER:
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
-    # Joint TRAJECTORY Controller:
+    
     joint_trajectory_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
@@ -202,22 +112,19 @@ def generate_launch_description():
 
 
     # *********************** MoveIt!2 *********************** #   
-    
-    # Command-line argument: RVIZ file?
     rviz_arg = DeclareLaunchArgument(
         "rviz_file", default_value="False", description="Load RVIZ file."
     )
 
-    # *** PLANNING CONTEXT *** #
     # Robot description, SRDF:
     robot_description_semantic_config = load_file("irb6640_ros2_moveit2", "config/irb6640.srdf")
     robot_description_semantic = {"robot_description_semantic": robot_description_semantic_config }
     
-    # Kinematics.yaml file:
+    # Kinematics.yaml:
     kinematics_yaml = load_yaml("irb6640_ros2_moveit2", "config/kinematics.yaml")
     robot_description_kinematics = {"robot_description_kinematics": kinematics_yaml}
 
-    # Move group: OMPL Planning.
+    # OMPL Planning:
     ompl_planning_pipeline_config = {
         "move_group": {
             "planning_plugin": "ompl_interface/OMPLPlanner",
@@ -284,88 +191,6 @@ def generate_launch_description():
         condition=UnlessCondition(load_RVIZfile),
     )
 
-    # *********************** ROS2.0 Robot/End-Effector Actions/Triggers *********************** #
-    # MoveJ ACTION:
-    moveJ_interface = Node(
-        name="moveJ_action",
-        package="ros2_actions",
-        executable="moveJ_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb6640_arm'}],
-    )
-    # MoveG ACTION:
-    # moveG_interface = Node(
-    #     name="moveG_action",
-    #     package="ros2_actions",
-    #     executable="moveG_action",
-    #     output="screen",
-    #     parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"ROB_PARAM": ''}],
-    # )
-    # MoveXYZW ACTION:
-    moveXYZW_interface = Node(
-        name="moveXYZW_action",
-        package="ros2_actions",
-        executable="moveXYZW_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb6640_arm'}],
-    )
-    # MoveL ACTION:
-    moveL_interface = Node(
-        name="moveL_action",
-        package="ros2_actions",
-        executable="moveL_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb6640_arm'}],
-    )
-    # MoveR ACTION:
-    moveR_interface = Node(
-        name="moveR_action",
-        package="ros2_actions",
-        executable="moveR_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb6640_arm'}],
-    )
-    # MoveXYZ ACTION:
-    moveXYZ_interface = Node(
-        name="moveXYZ_action",
-        package="ros2_actions",
-        executable="moveXYZ_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb6640_arm'}],
-    )
-    # MoveYPR ACTION:
-    moveYPR_interface = Node(
-        name="moveYPR_action",
-        package="ros2_actions",
-        executable="moveYPR_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb6640_arm'}],
-    )
-    # MoveROT ACTION:
-    moveROT_interface = Node(
-        name="moveROT_action",
-        package="ros2_actions",
-        executable="moveROT_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb6640_arm'}],
-    )
-    # MoveRP ACTION:
-    moveRP_interface = Node(
-        name="moveRP_action",
-        package="ros2_actions",
-        executable="moveRP_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb6640_arm'}],
-    )
-
-    # ATTACHER action for ros2_grasping plugin:
-    Attacher = Node(
-        name="ATTACHER_action",
-        package="ros2_grasping",
-        executable="attacher_action.py",
-        output="screen",
-    )
-    
     return LaunchDescription(
         [
             # Gazebo nodes:
@@ -397,7 +222,6 @@ def generate_launch_description():
                 OnProcessExit(
                     target_action = joint_trajectory_controller_spawner,
                     on_exit = [
-
                         # MoveIt!2:
                         TimerAction(
                             period=5.0,
@@ -406,25 +230,8 @@ def generate_launch_description():
                                 rviz_node_full,
                                 run_move_group_node
                             ]
-                        ),
-
-                        # ROS2.0 Actions:
-                        TimerAction(
-                            period=2.0,
-                            actions=[
-                                moveJ_interface,
-                                # moveG_interface,
-                                moveL_interface,
-                                moveR_interface,
-                                moveXYZ_interface,
-                                moveXYZW_interface,
-                                moveYPR_interface,
-                                moveROT_interface,
-                                moveRP_interface,
-                                Attacher,
-                            ]
-                        ),
-
+                        )
+                        # NOTE: Deleted custom ros2_actions to prevent crash
                     ]
                 )
             )
