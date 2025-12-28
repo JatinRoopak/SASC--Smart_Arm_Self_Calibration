@@ -85,4 +85,11 @@
   <!-- <disable_collisions link1="link_6" link2="link_piston" reason="Never" /> -->
   <!-- <disable_collisions link1="link_cylinder" link2="link_piston" reason="Default" /> -->
   <disable_collisions link1="link_cylinder" link2="link_2" reason="Never" />
+
+  <!-- disabling camera colllisions -->
+  <disable_collisions link1 = "camera_link" link2 = "link_6" reason="Attached device" />
+  <disable_collisions link1 = "camera_link" link2 = "tool0" reason="Attached device" />
+  <disable_collisions link1 = "camera_link" link2 = "link_5" reason="Near wrist" />
+  <disable_collisions link1 = "camera_link" link2 = "link_cylinder" reason="Near wrist" />
+
 </robot>

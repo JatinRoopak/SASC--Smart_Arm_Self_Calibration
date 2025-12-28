@@ -1,10 +1,4 @@
 #!/usr/bin/python3
-
-# ===================================== COPYRIGHT ===================================== #
-#  Cleaned by Gemini for SASC Project
-#  Removed ros2_actions dependencies to fix launch crash.
-# ===================================== COPYRIGHT ===================================== #
-
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription

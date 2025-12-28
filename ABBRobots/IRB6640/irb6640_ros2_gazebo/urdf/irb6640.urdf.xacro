@@ -16,6 +16,9 @@
     EE_no="${EE_no}"
   />
 
+  <xacro:include filename="$(find irb6640_ros2_gazebo)/urdf/irb6640_camera.urdf.xacro"/>	
+  <xacro:irb6640_camera prefix=""/>
+  
   <link name="world"/>
 
 
