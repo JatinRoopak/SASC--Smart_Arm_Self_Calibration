@@ -34,16 +34,21 @@ def load_yaml(package_name, file_path):
 def generate_launch_description():
 
     # *********************** Gazebo *********************** # 
-    irb6640_ros2_gazebo = os.path.join(
-        get_package_share_directory('irb6640_ros2_gazebo'),
-        'worlds',
-        'irb6640.world')
+
+    sasc_package_path = get_package_share_directory('sasc')
+    default_world_path = os.path.join(sasc_package_path, 'worlds', 'industrial_lab.world')
     
+    world_arg = DeclareLaunchArgument(
+        'world',
+        default_value=default_world_path,
+        description='path to your world'
+    )
+
     gazebo = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-                launch_arguments={'world': irb6640_ros2_gazebo}.items(),
-             )
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
+            launch_arguments = {'world': LaunchConfiguration('world')}.items(),
+    )
 
     print("ros2_RobotSimulation --> ABB IRB-6640 (Cleaned Version)")
 
@@ -187,6 +192,8 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            world_arg, #Registering new argument for custom world spawning. 
+
             # Gazebo nodes:
             gazebo, 
             spawn_entity,
