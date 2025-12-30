@@ -14,6 +14,7 @@ find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(moveit_core REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
+find_package(OpenCV REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -27,8 +28,19 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-install(DIRECTORY worlds
-  DESTINATION share/${PROJECT_NAME}
+install(DIRECTORY worlds DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY models DESTINATION share/${PROJECT_NAME})
+add_executable(camera_reader src/camera_reader.cpp)
+
+ament_target_dependencies(camera_reader
+  rclcpp
+  sensor_msgs
+  cv_bridge
+  image_transport
 )
+
+target_link_libraries(camera_reader ${OpenCV_LIBRARIES})
+
+install(TARGETS camera_reader DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

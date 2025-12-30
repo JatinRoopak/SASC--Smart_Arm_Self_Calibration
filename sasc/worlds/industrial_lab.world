@@ -2103,6 +2103,12 @@
       </camera>
     </gui>
 
+    <include>
+      <uri>model://aruco_marker</uri>
+      <name>calibration_target</name>
+      <pose>2.304600 -0.523466 1.115084 0 0 0</pose>
+    </include>
+
     <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
       <ros>
         <namespace>/ros2_grasp</namespace>

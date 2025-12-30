@@ -1,3 +1,5 @@
-.vscode/
-*.db
+sasc/log/
 log/
+.vscode/
+build/
+install/
