@@ -15,6 +15,9 @@ find_package(image_transport REQUIRED)
 find_package(moveit_core REQUIRED)
 find_package(moveit_ros_planning_interface REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -37,6 +40,9 @@ ament_target_dependencies(camera_reader
   sensor_msgs
   cv_bridge
   image_transport
+  geometry_msgs
+  tf2_ros
+  tf2_geometry_msgs
 )
 
 target_link_libraries(camera_reader ${OpenCV_LIBRARIES})
