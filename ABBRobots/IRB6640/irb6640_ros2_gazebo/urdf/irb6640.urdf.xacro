@@ -21,7 +21,6 @@
   
   <link name="world"/>
 
-
   <xacro:if value="${cell_layout_1}">
     <joint name="world-base_link-fixed" type="fixed">
       <parent link="world"/>

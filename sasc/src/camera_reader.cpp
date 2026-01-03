@@ -32,6 +32,8 @@ class CameraReader : public rclcpp::Node {
             );
 
             RCLCPP_INFO(this-> get_logger(), "waiting for camera data....");
+
+            arm_target_publisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("/arm_target_position", 10);
         }
 
     private:
@@ -42,6 +44,12 @@ class CameraReader : public rclcpp::Node {
 
         std::shared_ptr<tf2_ros::TransformListener>tf_listener{nullptr};
         std::unique_ptr<tf2_ros::Buffer>tf_buffer;
+
+        rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub;   
+        rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr info_sub;
+
+        rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr arm_target_publisher;
+
         
         void image_callback(const sensor_msgs::msg::Image::SharedPtr msg) const {
             if (!info_received_){
@@ -90,22 +98,17 @@ class CameraReader : public rclcpp::Node {
                             geometry_msgs::msg::PoseStamped global_pose;
                             tf_buffer->transform(local_pose, global_pose, "base_link");
 
-                            RCLCPP_INFO(this->get_logger(), "Global pose found X: %.2f, Y: %.2f, Z: %.2f", global_pose.pose.position.x, global_pose.pose.position.y, global_pose.pose.position.z);
-                            
-
+                            //RCLCPP_INFO(this->get_logger(), "Global pose found X: %.2f, Y: %.2f, Z: %.2f", global_pose.pose.position.x, global_pose.pose.position.y, global_pose.pose.position.z);
+                            arm_target_publisher->publish(global_pose);
                         }
                     } catch (tf2::TransformException &ex){
                         RCLCPP_WARN(this->get_logger(), "Transform Error: %s", ex.what());
                     }
-
                     // RCLCPP_INFO(this->get_logger(), "Marker %d is %.3f meters away", ids[i], tvecs[i][2]);
                 }
-
             }
-
             cv::imshow("3D Robot Vision", cv_ptr->image);
             cv::waitKey(1);
-
         }
 
         void info_callback(const sensor_msgs::msg::CameraInfo::SharedPtr msg){
@@ -122,9 +125,6 @@ class CameraReader : public rclcpp::Node {
             info_received_ =  true;
             RCLCPP_INFO(this->get_logger(), "Calibration Recieved fx=%.2f cx=%.2f", camera_matrix.at<double>(0,0), camera_matrix.at<double>(0,2));
         }
-        
-        rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub;   
-        rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr info_sub;
 };
 
 

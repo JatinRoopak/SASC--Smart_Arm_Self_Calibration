@@ -50,7 +50,7 @@ def generate_launch_description():
             launch_arguments = {'world': LaunchConfiguration('world')}.items(),
     )
 
-    print("ros2_RobotSimulation --> ABB IRB-6640 (Cleaned Version)")
+    print("ros2_RobotSimulation --> ABB IRB-6640 (Custom World)")
 
     # Cell Layout & End Effector vars (Defaults):
     cell_layout_1 = "true"

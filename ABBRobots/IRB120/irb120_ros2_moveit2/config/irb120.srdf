@@ -67,4 +67,14 @@
   <disable_collisions link1="link_4" link2="link_6" reason="Default" />
   <disable_collisions link1="link_5" link2="link_6" reason="Adjacent" />
 
+  <!-- disabling camera colllisions -->
+  <disable_collisions link1="camera_link" link2 = "tool0" reason="Attached device" />
+  <disable_collisions link1="camera_link" link2 = "link_5" reason="Near camera" />
+  <disable_collisions link1="camera_link" link2="link_6" reason="Adjacent" />
+  <disable_collisions link1="camera_link" link2="flange" reason="Adjacent" />
+  <disable_collisions link1="camera_link" link2="egp64_gripper_base_link" reason="Touching" />
+  <disable_collisions link1="camera_link" link2="egp64_fingertip_left_link" reason="Adjacent" />
+  <disable_collisions link1="camera_link" link2="egp64_fingertip_right_link" reason="Adjacent" />
+  <disable_collisions link1="camera_link" link2="schunk_coupler" reason="Never" />
+
 </robot>

@@ -1,73 +1,17 @@
 <?xml version="1.0"?>
 
-<!-- 
-
-# ===================================== COPYRIGHT ===================================== #
-#                                                                                       #
-#  IFRA (Intelligent Flexible Robotics and Assembly) Group, CRANFIELD UNIVERSITY        #
-#  Created on behalf of the IFRA Group at Cranfield University, United Kingdom          #
-#  E-mail: IFRA@cranfield.ac.uk                                                         #
-#                                                                                       #
-#  Licensed under the Apache-2.0 License.                                               #
-#  You may not use this file except in compliance with the License.                     #
-#  You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0  #
-#                                                                                       #
-#  Unless required by applicable law or agreed to in writing, software distributed      #
-#  under the License is distributed on an "as-is" basis, without warranties or          #
-#  conditions of any kind, either express or implied. See the License for the specific  #
-#  language governing permissions and limitations under the License.                    #
-#                                                                                       #
-#  IFRA Group - Cranfield University                                                    #
-#  AUTHORS: Mikel Bueno Viso - Mikel.Bueno-Viso@cranfield.ac.uk                         #
-#           Seemal Asif      - s.asif@cranfield.ac.uk                                   #
-#           Phil Webb        - p.f.webb@cranfield.ac.uk                                 #
-#                                                                                       #
-#  Date: July, 2022.                                                                    #
-#                                                                                       #
-# ===================================== COPYRIGHT ===================================== #
-
-# ===================================== COPYRIGHT ===================================== #
-#                                                                                       #
-#  Some of the information used to build the ROS2 ABB-IRB120 .urdf files in this ROS2   #
-#  repository has been taken from the following resource:                               #
-#       - abb_experimental (https://github.com/ros-industrial/abb_experimental)         #
-#                                                                                       #
-#  AUTHORS:                                                                             #
-#       - ROS-Industrial - https://rosindustrial.org                                    #
-#       - Mark Culleton (Trinity College Dublin) - culletom@tcd.ie                      #
-#       - Kevin Kelly   (Trinity College Dublin)                                        #
-#                                                                                       #
-#  COPYRIGHT - ROS-Industrial                                                           #
-#  (ORIGINAL LICENSE) -> Licensed under the Apache-2.0 License.                         #
-#                                                                                       #
-#  CHANGES MADE:                                                                        #
-#  The original files contain the .urdf information of the robot for ROS1, and these    #
-#  have been modified for ROS2.                                                         #
-#                                                                                       #
-# ===================================== COPYRIGHT ===================================== #
-
-# ======= CITE OUR WORK ======= #
-# You can cite our work with the following statement:
-# IFRA (2022) ROS2.0 ROBOT SIMULATION. URL: https://github.com/IFRA-Cranfield/ros2_RobotSimulation.
-
--->
-
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
   
-  <!-- Include additional ABB-Resources/MATERIALS+COLOUR xacro files: -->
   <xacro:include filename="$(find irb120_ros2_gazebo)/urdf/abb_resources/common_materials.xacro"/>
 
-  <!-- XACRO-MACRO of ABB-IRB120: -->
   <xacro:macro name="irb120" params="prefix EE_no EE_schunk">
 
-    <!-- Load ABB IRB120 TRANSMISSION file: -->
     <xacro:include filename="$(find irb120_ros2_gazebo)/urdf/irb120_transmission.xacro" />
     <xacro:irb120_transmission 
       prefix=""
       EE_schunk="${EE_schunk}"
     />
     
-    <!-- Load ABB IRB120 ROS2_CONTROL file: -->
     <xacro:include filename="$(find irb120_ros2_gazebo)/urdf/irb120_ros2control.xacro" />
     <xacro:irb120_ros2control 
       prefix=""
@@ -75,10 +19,7 @@
       EE_schunk="${EE_schunk}"
     />
 
-    <!-- ***** ABB-IRB120 ROBOT .urdf SERIAL CHAIN ***** -->
 
-    <!-- Link list: -->
-    <!-- base_link -->
     <link name="${prefix}base_link">
       <inertial>
         <mass value="6.215"/>
@@ -101,7 +42,6 @@
       </collision>
     </link>
 
-    <!-- link_1 -->
     <link name="${prefix}link_1">
       <inertial>
         <mass value="3.067" />
@@ -124,7 +64,6 @@
       </collision>
     </link>
 
-    <!-- link_2 -->
     <link name="${prefix}link_2">
       <inertial>
         <mass value="3.909"/>
@@ -147,7 +86,6 @@
       </collision>
     </link>
 
-    <!-- link_3 -->
     <link name="${prefix}link_3">
       <inertial>
         <mass value="2.944"/>
@@ -170,7 +108,6 @@
       </collision>
     </link>
 
-    <!-- link_4 -->
     <link name="${prefix}link_4">
       <inertial>
         <mass value="1.328"/>
@@ -193,7 +130,6 @@
       </collision>
     </link>
 
-    <!-- link_5 -->
     <link name="${prefix}link_5">
       <inertial>
         <mass value="0.546"/>
@@ -216,7 +152,6 @@
       </collision>
     </link>
 
-    <!-- link_6 -->
     <link name="${prefix}link_6">
       <inertial>
         <mass value="0.137"/>
@@ -238,10 +173,7 @@
         <xacro:material_abb_yellow />
       </collision>
     </link>
-    <!-- end of link list -->
 
-    <!-- Joint list: -->
-    <!-- joint_1 -->
     <joint name="${prefix}joint_1" type="revolute">
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <parent link="${prefix}base_link"/>
@@ -251,7 +183,6 @@
       <dynamics damping="50.0" friction="1.0"/>
     </joint>
 
-    <!-- joint_2 -->
     <joint name="${prefix}joint_2" type="revolute">
       <origin rpy="0 0 0" xyz="0 0 0.29"/>
       <parent link="${prefix}link_1"/>
@@ -261,7 +192,6 @@
       <dynamics damping="50.0" friction="1.0"/>
     </joint>
 
-    <!-- joint_3 -->
     <joint name="${prefix}joint_3" type="revolute">
       <origin rpy="0 0 0" xyz="0 0 0.27"/>
       <parent link="${prefix}link_2"/>
@@ -271,7 +201,6 @@
       <dynamics damping="10.0" friction="1.0"/>
     </joint>
 
-    <!-- joint_4 -->
     <joint name="${prefix}joint_4" type="revolute">
       <origin rpy="0 0 0" xyz="0 0 0.07"/>
       <parent link="${prefix}link_3"/>
@@ -281,7 +210,6 @@
       <dynamics damping="5.0" friction="1.0"/>
     </joint>
 
-    <!-- joint_5 -->
     <joint name="${prefix}joint_5" type="revolute">
       <origin rpy="0 0 0" xyz="0.302 0 0"/>
       <parent link="${prefix}link_4"/>
@@ -291,7 +219,6 @@
       <dynamics damping="2.0" friction="1.0"/>
     </joint>
 
-    <!-- joint_6 -->
     <joint name="${prefix}joint_6" type="revolute">
       <origin rpy="0 0 0" xyz="0.072 0 0"/>
       <parent link="${prefix}link_5"/>
@@ -300,9 +227,7 @@
       <axis xyz="1 0 0"/>
       <dynamics damping="1.0" friction="1.0"/>
     </joint>
-    <!-- end of joint list -->
 
-    <!-- ROS-Industrial 'base' frame: base_link to ABB World Coordinates transform -->
     <link name="${prefix}base" />
     <joint name="${prefix}base_link-base" type="fixed">
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -310,7 +235,6 @@
       <child link="${prefix}base"/>
     </joint>
 
-    <!-- ROS-Industrial 'flange' frame: attachment point for EEF models -->
     <link name="${prefix}flange"/>
     <joint type="fixed" name="${prefix}joint_6-flange">
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -318,7 +242,6 @@
       <child link="${prefix}flange"/>
     </joint>
 
-    <!-- ROS-Industrial 'tool0' frame: all-zeros tool frame -->
     <link name="${prefix}tool0" />
     <joint name="${prefix}link_6-tool0" type="fixed">
       <origin xyz="0 0 0" rpy="0 ${radians(90)} 0" />
@@ -326,13 +249,9 @@
       <child link="${prefix}tool0" />
     </joint>
 
-    <!-- =================================== -->
-    <!-- ========== END-EFFECTORS ========== -->
 
-    <!-- === SCHUNK EGP-64 GRIPPER === -->
     <xacro:if value="${EE_schunk}">
 
-      <!-- Schunk coupler (LINK): -->
       <link name="schunk_coupler">
         <visual>
           <geometry>
@@ -351,7 +270,6 @@
         </inertial>
       </link>
 
-      <!-- Schunk coupler (JOINT): -->
       <joint name="schunk_coupler_joint" type="fixed">
         <origin xyz="0 0 0.001" rpy="0 0 ${pi/4}" />
         <parent link="tool0"/>
@@ -391,7 +309,6 @@
         <origin xyz="-0.03205 0.01812 0.02047" rpy="0 0 0" />
       </joint>
 
-      <!-- LEFT FINGER BASE -->
       
       <link name="egp64_finger_left_link">
         <inertial>
@@ -424,7 +341,6 @@
         <dynamics damping="1.0" friction="1.0"/>
       </joint>
       
-      <!-- LEFT FINGERTIP -->
       
       <link name="egp64_fingertip_left_link">
         <inertial>
@@ -455,7 +371,6 @@
       </joint>
 
       
-      <!-- RIGHT FINGER BASE -->
 
       <link name="egp64_finger_right_link">
         <inertial>
@@ -486,7 +401,6 @@
         <dynamics damping="1.0" friction="1.0"/>
       </joint>
       
-      <!-- RIGHT FINGERTIP -->
 
       <link name="egp64_fingertip_right_link">
         <inertial>
@@ -514,7 +428,6 @@
         <origin xyz="-0.01211 -0.00197 0.00093" rpy="0 0 0"/>
       </joint>
 
-      <!-- SMALL CUBE FOR GRIPPER PLUGIN -->
 
       <link name="EE_egp64">
         <inertial>
@@ -539,7 +452,6 @@
       </joint>
 
     </xacro:if>
-    <!-- === SCHUNK EGP-64 GRIPPER === -->
 
   </xacro:macro>
 </robot>

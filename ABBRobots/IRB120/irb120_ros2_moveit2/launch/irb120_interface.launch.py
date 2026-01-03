@@ -71,17 +71,34 @@ def generate_launch_description():
 
     # *********************** Gazebo *********************** # 
     
-    # DECLARE Gazebo WORLD file:
-    irb120_ros2_gazebo = os.path.join(
-        get_package_share_directory('irb120_ros2_gazebo'),
-        'worlds',
-        'irb120.world')
+    # # DECLARE Gazebo WORLD file:
+    # irb120_ros2_gazebo = os.path.join(
+    #     get_package_share_directory('irb120_ros2_gazebo'),
+    #     'worlds',
+    #     'irb120.world')
+
     # DECLARE Gazebo LAUNCH file:
+    # gazebo = IncludeLaunchDescription(
+    #             PythonLaunchDescriptionSource([os.path.join(
+    #                 get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
+    #             launch_arguments={'world': irb120_ros2_gazebo}.items(),
+    #          )
+
+    # *****CUSTOM WORLD***** #
+    sasc_package_path = get_package_share_directory('sasc')
+    default_world_path = os.path.join(sasc_package_path, 'worlds', 'industrial_lab.world')
+
+    world_arg = DeclareLaunchArgument(
+        'world',
+        default_value=default_world_path,
+        description='path to your world'
+    )
+
     gazebo = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
-                launch_arguments={'world': irb120_ros2_gazebo}.items(),
-             )
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
+            launch_arguments = {'world': LaunchConfiguration('world')}.items(),
+    )
 
     # ***** COMMAND LINE ARGUMENTS ***** #
     print("")
@@ -91,6 +108,7 @@ def generate_launch_description():
 
     print("ros2_RobotSimulation --> ABB IRB-120")
     print("Launch file -> irb120_interface.launch.py")
+    print("ros2_RobotSimulation --> ABB IRB-6640 (Custom World)")
 
     print("")
     print("Robot configuration:")
@@ -324,90 +342,91 @@ def generate_launch_description():
         condition=UnlessCondition(load_RVIZfile),
     )
 
-    # *********************** ROS2.0 Robot/End-Effector Actions/Triggers *********************** #
-    # MoveJ ACTION:
-    moveJ_interface = Node(
-        name="moveJ_action",
-        package="ros2_actions",
-        executable="moveJ_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
-    )
-    # MoveG ACTION:
-    moveG_interface = Node(
-        name="moveG_action",
-        package="ros2_actions",
-        executable="moveG_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'egp64'}],
-    )
-    # MoveXYZW ACTION:
-    moveXYZW_interface = Node(
-        name="moveXYZW_action",
-        package="ros2_actions",
-        executable="moveXYZW_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
-    )
-    # MoveL ACTION:
-    moveL_interface = Node(
-        name="moveL_action",
-        package="ros2_actions",
-        executable="moveL_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
-    )
-    # MoveR ACTION:
-    moveR_interface = Node(
-        name="moveR_action",
-        package="ros2_actions",
-        executable="moveR_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
-    )
-    # MoveXYZ ACTION:
-    moveXYZ_interface = Node(
-        name="moveXYZ_action",
-        package="ros2_actions",
-        executable="moveXYZ_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
-    )
-    # MoveYPR ACTION:
-    moveYPR_interface = Node(
-        name="moveYPR_action",
-        package="ros2_actions",
-        executable="moveYPR_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
-    )
-    # MoveROT ACTION:
-    moveROT_interface = Node(
-        name="moveROT_action",
-        package="ros2_actions",
-        executable="moveROT_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
-    )
-    # MoveRP ACTION:
-    moveRP_interface = Node(
-        name="moveRP_action",
-        package="ros2_actions",
-        executable="moveRP_action",
-        output="screen",
-        parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
-    )
+    # # *********************** ROS2.0 Robot/End-Effector Actions/Triggers *********************** #
+    # # MoveJ ACTION:
+    # moveJ_interface = Node(
+    #     name="moveJ_action",
+    #     package="ros2_actions",
+    #     executable="moveJ_action",
+    #     output="screen",
+    #     parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
+    # )
+    # # MoveG ACTION:
+    # moveG_interface = Node(
+    #     name="moveG_action",
+    #     package="ros2_actions",
+    #     executable="moveG_action",
+    #     output="screen",
+    #     parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'egp64'}],
+    # )
+    # # MoveXYZW ACTION:
+    # moveXYZW_interface = Node(
+    #     name="moveXYZW_action",
+    #     package="ros2_actions",
+    #     executable="moveXYZW_action",
+    #     output="screen",
+    #     parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
+    # )
+    # # MoveL ACTION:
+    # moveL_interface = Node(
+    #     name="moveL_action",
+    #     package="ros2_actions",
+    #     executable="moveL_action",
+    #     output="screen",
+    #     parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
+    # )
+    # # MoveR ACTION:
+    # moveR_interface = Node(
+    #     name="moveR_action",
+    #     package="ros2_actions",
+    #     executable="moveR_action",
+    #     output="screen",
+    #     parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
+    # )
+    # # MoveXYZ ACTION:
+    # moveXYZ_interface = Node(
+    #     name="moveXYZ_action",
+    #     package="ros2_actions",
+    #     executable="moveXYZ_action",
+    #     output="screen",
+    #     parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
+    # )
+    # # MoveYPR ACTION:
+    # moveYPR_interface = Node(
+    #     name="moveYPR_action",
+    #     package="ros2_actions",
+    #     executable="moveYPR_action",
+    #     output="screen",
+    #     parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
+    # )
+    # # MoveROT ACTION:
+    # moveROT_interface = Node(
+    #     name="moveROT_action",
+    #     package="ros2_actions",
+    #     executable="moveROT_action",
+    #     output="screen",
+    #     parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
+    # )
+    # # MoveRP ACTION:
+    # moveRP_interface = Node(
+    #     name="moveRP_action",
+    #     package="ros2_actions",
+    #     executable="moveRP_action",
+    #     output="screen",
+    #     parameters=[robot_description, robot_description_semantic, kinematics_yaml, {"use_sim_time": True}, {"ROB_PARAM": 'irb120_arm'}],
+    # )
 
     # ATTACHER action for ros2_grasping plugin:
-    Attacher = Node(
-        name="ATTACHER_action",
-        package="ros2_grasping",
-        executable="attacher_action.py",
-        output="screen",
-    )
+    # Attacher = Node(
+    #     name="ATTACHER_action",
+    #     package="ros2_grasping",
+    #     executable="attacher_action.py",
+    #     output="screen",
+    # )
 
     return LaunchDescription(
         [
+            world_arg,
             # Gazebo nodes:
             gazebo, 
             spawn_entity,
@@ -451,7 +470,9 @@ def generate_launch_description():
 
             RegisterEventHandler(
                 OnProcessExit(
-                    target_action = egp64right_controller_spawner,
+                    # target_action = egp64right_controller_spawner,
+                    target_action = joint_trajectory_controller_spawner,
+
                     on_exit = [
 
                         # MoveIt!2:
@@ -463,23 +484,24 @@ def generate_launch_description():
                                 run_move_group_node
                             ]
                         ),
-
+                        
+                        # Commenting out ros2 actions command to not crash
                         # ROS2.0 Actions:
-                        TimerAction(
-                            period=2.0,
-                            actions=[
-                                moveJ_interface,
-                                moveG_interface,
-                                moveL_interface,
-                                moveR_interface,
-                                moveXYZ_interface,
-                                moveXYZW_interface,
-                                moveYPR_interface,
-                                moveROT_interface,
-                                moveRP_interface,
-                                Attacher,
-                            ]
-                        ),
+                        # TimerAction(
+                        #     period=2.0,
+                        #     actions=[
+                        #         moveJ_interface,
+                        #         moveG_interface,
+                        #         moveL_interface,
+                        #         moveR_interface,
+                        #         moveXYZ_interface,
+                        #         moveXYZW_interface,
+                        #         moveYPR_interface,
+                        #         moveROT_interface,
+                        #         moveRP_interface,
+                        #         Attacher,
+                        #     ]
+                        # ),
 
                     ]
                 )

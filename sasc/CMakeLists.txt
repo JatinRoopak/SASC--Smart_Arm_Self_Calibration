@@ -18,6 +18,8 @@ find_package(OpenCV REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(moveit_ros_planning_interface REQUIRED)
+find_package(moveit_core REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -33,7 +35,10 @@ endif()
 
 install(DIRECTORY worlds DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY models DESTINATION share/${PROJECT_NAME})
+
 add_executable(camera_reader src/camera_reader.cpp)
+add_executable(arm_commander src/arm_commander.cpp)
+
 
 ament_target_dependencies(camera_reader
   rclcpp
@@ -44,9 +49,21 @@ ament_target_dependencies(camera_reader
   tf2_ros
   tf2_geometry_msgs
 )
+ament_target_dependencies(arm_commander
+  rclcpp
+  sensor_msgs
+  cv_bridge
+  image_transport
+  geometry_msgs
+  tf2_ros
+  tf2_geometry_msgs
+  moveit_ros_planning_interface
+  moveit_core
+)
 
 target_link_libraries(camera_reader ${OpenCV_LIBRARIES})
 
 install(TARGETS camera_reader DESTINATION lib/${PROJECT_NAME})
+install(TARGETS arm_commander DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
