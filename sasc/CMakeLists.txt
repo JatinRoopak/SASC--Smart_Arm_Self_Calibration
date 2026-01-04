@@ -65,5 +65,6 @@ target_link_libraries(camera_reader ${OpenCV_LIBRARIES})
 
 install(TARGETS camera_reader DESTINATION lib/${PROJECT_NAME})
 install(TARGETS arm_commander DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY launch_files/ DESTINATION share/${PROJECT_NAME}/launch)
 
 ament_package()
