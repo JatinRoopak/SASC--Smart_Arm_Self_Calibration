@@ -1,16 +1,21 @@
 #include "rclcpp/rclcpp.hpp"
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <moveit/move_group_interface/move_group_interface.h>
-#include <moveit/move_group_interface/move_group_interface.h>
+#include <atomic> //for the boolean operator to stop robot from listening to every target coming 
+#include <memory>
 
 using namespace std;
 
 class ArmCommander : public rclcpp::Node {
     public:
-        ArmCommander(const rclcpp::NodeOptions & options) : Node("arm_commander_node", options){
+        ArmCommander(const rclcpp::NodeOptions & options) 
+        : Node("arm_commander_node", options), is_moving(false){
+            rclcpp::QoS qos_profile(1);
+            qos_profile.best_effort();
+
             arm_target_subscriber = this->create_subscription<geometry_msgs::msg::PoseStamped>(
                 "/arm_target_position",
-                10,
+                rclcpp::SensorDataQoS(),
                 std::bind(&ArmCommander::arm_target, this, std::placeholders::_1)
             );
         }
@@ -23,13 +28,28 @@ class ArmCommander : public rclcpp::Node {
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr arm_target_subscriber;
         std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group;
 
-        void arm_target(const geometry_msgs::msg::PoseStamped::SharedPtr msg) const{
+        std::atomic<bool> is_moving; //the busy flag
+
+        void arm_target(const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
             if(!move_group){
-                RCLCPP_ERROR(this->get_logger(), "MOveGroupInterface not Inistialized.....");
+                RCLCPP_ERROR(this->get_logger(), "MoveGroupInterface not Inistialized.....");
                 return;
             }
 
-            move_group->setPoseTarget(*msg);
+            if (is_moving){
+                return;
+            }
+
+            is_moving = true;
+            RCLCPP_INFO(this->get_logger(), "Target is locked, Executing the move........");
+
+            geometry_msgs::msg::PoseStamped current_pose = move_group->getCurrentPose();
+
+            geometry_msgs::msg::PoseStamped safe_target = *msg;
+            safe_target.pose.position.x -= 0.40;
+            safe_target.pose.orientation = current_pose.pose.orientation;
+
+            move_group->setPoseTarget(safe_target);
 
             auto result = move_group->move();
 
@@ -38,6 +58,8 @@ class ArmCommander : public rclcpp::Node {
             }else{
                 RCLCPP_INFO(this->get_logger(), "Movement failed!");
             }
+
+            is_moving = false;
         }
 };
 
