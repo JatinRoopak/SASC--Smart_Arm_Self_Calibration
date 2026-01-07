@@ -10,7 +10,15 @@ class ArmCommander : public rclcpp::Node {
     public:
         ArmCommander(const rclcpp::NodeOptions & options) 
         : Node("arm_commander_node", options), is_moving(false){
-            rclcpp::QoS qos_profile(1);
+
+            //must recieve an argument to run the custom safety_dist
+            if (this->has_parameter("safety_dist")){
+                this->get_parameter("safety_dist", safety_dist);
+            } else{
+                safety_dist = this->declare_parameter<double>("safety_dist", 0.40); //safety distance parameter deafult is 0.40 
+            }
+
+            rclcpp::QoS qos_profile(1); //focus on the last sample
             qos_profile.best_effort();
 
             arm_target_subscriber = this->create_subscription<geometry_msgs::msg::PoseStamped>(
@@ -27,6 +35,7 @@ class ArmCommander : public rclcpp::Node {
     private:
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr arm_target_subscriber;
         std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group;
+        double safety_dist;
 
         std::atomic<bool> is_moving; //the busy flag
 
@@ -44,13 +53,11 @@ class ArmCommander : public rclcpp::Node {
             RCLCPP_INFO(this->get_logger(), "Target is locked, Executing the move........");
 
             geometry_msgs::msg::PoseStamped current_pose = move_group->getCurrentPose();
-
             geometry_msgs::msg::PoseStamped safe_target = *msg;
-            safe_target.pose.position.x -= 0.40;
-            safe_target.pose.orientation = current_pose.pose.orientation;
+            safe_target.pose.position.x -= safety_dist; //adding safety distance
+            safe_target.pose.orientation = current_pose.pose.orientation; //Using robot current orientation 
 
             move_group->setPoseTarget(safe_target);
-
             auto result = move_group->move();
 
             if(result == moveit::core::MoveItErrorCode::SUCCESS){
@@ -65,10 +72,12 @@ class ArmCommander : public rclcpp::Node {
 
 int main(int argc, char** argv){
     rclcpp::init(argc, argv);
+
     rclcpp::NodeOptions node_options;
-    node_options.automatically_declare_parameters_from_overrides(true);
+    node_options.automatically_declare_parameters_from_overrides(true); //Auto declare the parameters
     auto node = std::make_shared<ArmCommander>(node_options);
     node->init_moveit("irb6640_arm");
+
     rclcpp::executors::MultiThreadedExecutor executor;
     executor.add_node(node);
     executor.spin();
