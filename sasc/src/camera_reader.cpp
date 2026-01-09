@@ -96,7 +96,7 @@ class CameraReader : public rclcpp::Node {
                     try{
                         if (tf_buffer->canTransform("base_link", "camera_link_optical", msg->header.stamp, rclcpp::Duration::from_seconds(0.1))){
                             geometry_msgs::msg::PoseStamped global_pose;
-                            tf_buffer->transform(local_pose, global_pose, "base_link");
+                            tf_buffer->transform(local_pose, global_pose, "base_link"); //main transformation to find coordinate in base_link frame
 
                             //RCLCPP_INFO(this->get_logger(), "Global pose found X: %.2f, Y: %.2f, Z: %.2f", global_pose.pose.position.x, global_pose.pose.position.y, global_pose.pose.position.z);
                             arm_target_publisher->publish(global_pose);
