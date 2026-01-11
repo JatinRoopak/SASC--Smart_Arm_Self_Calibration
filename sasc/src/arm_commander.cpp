@@ -12,7 +12,7 @@ using namespace std;
 class ArmCommander : public rclcpp::Node {
     public:
         ArmCommander(const rclcpp::NodeOptions & options) 
-        : Node("arm_commander_node", options), ready_to_operate(false), is_moving(false){
+        : Node("arm_commander_node", options), robotLoadUp(false), isRobotMoving(false){
 
             //must recieve an argument to run the custom safety_dist
             if (this->has_parameter("safety_dist")){
@@ -33,7 +33,7 @@ class ArmCommander : public rclcpp::Node {
                 "/arm_target_position",
                 rclcpp::SensorDataQoS(),
                 std::bind(&ArmCommander::arm_target, this, std::placeholders::_1),
-                sub_opt //different lane
+                sub_opt //different lane for subscriber
             );
         }
 
@@ -45,7 +45,7 @@ class ArmCommander : public rclcpp::Node {
 
             if(sucess){
                 RCLCPP_INFO(this->get_logger(), "Success: Robot is connected.");
-                ready_to_operate = true; 
+                robotLoadUp = true; 
             }else{
                 RCLCPP_ERROR(this->get_logger(), "TimeOut: Robot not responding.");
             }
@@ -59,11 +59,11 @@ class ArmCommander : public rclcpp::Node {
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr calibration_publisher;
 
         double safety_dist;
-        std::atomic<bool> ready_to_operate; //flag to let the joint states
-        std::atomic<bool> is_moving; //the busy flag
+        std::atomic<bool> robotLoadUp; //flag to let the robot joint states fully loaded
+        std::atomic<bool> isRobotMoving; //the busy flag
 
         void arm_target(const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
-            if(!ready_to_operate){
+            if(!robotLoadUp){
                 RCLCPP_ERROR(this->get_logger(), "MoveGroupInterface not Inistialized.....");
                 return;
             }
@@ -71,7 +71,7 @@ class ArmCommander : public rclcpp::Node {
                 RCLCPP_ERROR(this->get_logger(), "CRITICAL: MoveGroup is NULL!");
                 return;
             }
-            if (is_moving){
+            if (isRobotMoving){
                 return;
             }
 
@@ -99,7 +99,7 @@ class ArmCommander : public rclcpp::Node {
                 return;
             }
 
-            is_moving = true;
+            isRobotMoving = true;
 
             geometry_msgs::msg::PoseStamped safe_target = *msg;
             safe_target.pose.position.x -= safety_dist; //adding safety distance
@@ -114,7 +114,7 @@ class ArmCommander : public rclcpp::Node {
                 RCLCPP_INFO(this->get_logger(), "Movement failed!");
             }
 
-            is_moving = false;
+            isRobotMoving = false;
         }
 };
 

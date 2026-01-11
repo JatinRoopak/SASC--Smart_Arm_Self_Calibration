@@ -38,7 +38,7 @@ install(DIRECTORY models DESTINATION share/${PROJECT_NAME})
 
 add_executable(camera_reader src/camera_reader.cpp)
 add_executable(arm_commander src/arm_commander.cpp)
-
+add_executable(error_calibration src/error_calibration.cpp)
 
 ament_target_dependencies(camera_reader
   rclcpp
@@ -60,11 +60,16 @@ ament_target_dependencies(arm_commander
   moveit_ros_planning_interface
   moveit_core
 )
+ament_target_dependencies(error_calibration 
+  rclcpp 
+  std_msgs
+)
 
 target_link_libraries(camera_reader ${OpenCV_LIBRARIES})
 
 install(TARGETS camera_reader DESTINATION lib/${PROJECT_NAME})
 install(TARGETS arm_commander DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY launch_files/ DESTINATION share/${PROJECT_NAME}/launch)
+install(TARGETS error_calibration DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
