@@ -10,8 +10,7 @@
 
 SASC is a closed-loop perception and control framework designed to autonomously calibrate robotic manipulator positioning using visual feedback. By leveraging an eye-in-hand camera setup and ArUco markers, the system measures real-time kinematic errors (RMSE) and applies dynamic corrections to the robot's motion planning stack, eliminating control drift without manual intervention.
 
-![System Architecture Diagram](docs/images/architecture_placeholder.png)
-*(Placeholder: Add a diagram showing data flow between Camera, Commander, and Calibration Node)*
+<img width="626" height="530" alt="Screenshot from 2026-01-17 18-23-23" src="https://github.com/user-attachments/assets/e1ca0a85-ab23-4e06-9e36-6d938689fb6d" />
 
 ---
 
