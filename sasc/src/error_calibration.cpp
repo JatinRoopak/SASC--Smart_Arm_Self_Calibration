@@ -1,5 +1,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
+#include <std_msgs/msg/float64.hpp>
+#include <chrono>
+#include <thread>
 #include <vector>
 #include <cmath>
 
@@ -17,9 +20,12 @@ class ErrorCalibration : public rclcpp::Node{
                 10,
                 std::bind(&ErrorCalibration::info_callback, this, placeholders::_1)
             );
+
+            sasc_correction_publisher = this->create_publisher<std_msgs::msg::Float64>("/sasc/correction", 10);
         }
     private:
         rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr sasc_data_subscriber;
+        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr sasc_correction_publisher;
         vector<vector<double>> data_history;
         double safety_dist;
 
@@ -36,7 +42,7 @@ class ErrorCalibration : public rclcpp::Node{
 
         void calculate_accuracy(){
             RCLCPP_INFO(this->get_logger(), "Batch of data if full. Calculating Error");
-            double total_squared_error = 0.0;
+            double total_error = 0.0;
 
             for (const auto& row : data_history){
                 //first 3 elements in data are robot's coordinates and next 3 are camera's
@@ -45,18 +51,25 @@ class ErrorCalibration : public rclcpp::Node{
 
                 double target_x = cam_x - safety_dist;
                 double error = robot_x - target_x;
-                total_squared_error += std::pow(error, 2);
+                total_error += error;
             }
 
-            double mean_squared_error = total_squared_error / data_history.size();
-            double rms = std::sqrt(mean_squared_error);
+            double mean_error = total_error / data_history.size(); //publishing message
 
-            RCLCPP_INFO(this->get_logger(), "---------------------------------------");
-            RCLCPP_INFO(this->get_logger(), "   FINAL ACCURACY REPORT");
-            RCLCPP_INFO(this->get_logger(), "   Safety Distance Used: %.2fm", safety_dist);
-            RCLCPP_INFO(this->get_logger(), "   RMSE (Average Error): %.5f meters", rms);
-            RCLCPP_INFO(this->get_logger(), "   Error in mm: %.2f mm", rms * 1000.0);
-            RCLCPP_INFO(this->get_logger(), "---------------------------------------");
+            auto error_message = std_msgs::msg::Float64();
+            error_message.data = mean_error;
+            sasc_correction_publisher->publish(error_message);
+            RCLCPP_INFO(this->get_logger(), ">> CORRECTION SENT: %.5f meters", mean_error);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100)); //time for message to get published
+
+            // double mean_error = std::sqrt(mean_squared_error);
+
+            // RCLCPP_INFO(this->get_logger(), "---------------------------------------");
+            // RCLCPP_INFO(this->get_logger(), "   FINAL ACCURACY REPORT");
+            // RCLCPP_INFO(this->get_logger(), "   Safety Distance Used: %.2fm", safety_dist);
+            // RCLCPP_INFO(this->get_logger(), "   RMSE (Average Error): %.5f meters", rms);
+            // RCLCPP_INFO(this->get_logger(), "   Error in mm: %.2f mm", rms * 1000.0);
+            // RCLCPP_INFO(this->get_logger(), "---------------------------------------");
         }
 };
 
