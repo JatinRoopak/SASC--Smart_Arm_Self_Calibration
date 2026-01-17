@@ -1,268 +1,140 @@
-SASC: Smart Arm Self-Calibration System
-Current Status: Work in Progress (Alpha) Supported Platforms: ABB IRB 6640 (Simulation)
+# SASC: Smart Arm Self-Calibration System
+
+**Current Status:** Alpha (Work in Progress)  
+**Supported Platform:** ABB IRB 6640 (Simulation)  
+**Middleware:** ROS 2 Humble Hawksbill  
+
+---
+
+## Overview
 
 SASC is a closed-loop perception and control framework designed to autonomously calibrate robotic manipulator positioning using visual feedback. By leveraging an eye-in-hand camera setup and ArUco markers, the system measures real-time kinematic errors (RMSE) and applies dynamic corrections to the robot's motion planning stack, eliminating control drift without manual intervention.
 
-![Placeholder: System Architecture Diagram showing Data Flow between Camera, Commander, and Calibration Node]
+![System Architecture Diagram](docs/images/architecture_placeholder.png)
+*(Placeholder: Add a diagram showing data flow between Camera, Commander, and Calibration Node)*
 
-Key Features
-Closed-Loop Visual Servoing: Real-time tracking of ArUco markers using OpenCV and ROS 2.
+---
 
-Automated Error Calculation: Calculates Root Mean Square Error (RMSE) between the robot's end-effector frame and the visual target.
+## Key Features
 
-Dynamic Parameter Tuning: Automatically updates the safety distance parameters in real-time based on calculated drift.
+* **Closed-Loop Visual Servoing:** Real-time tracking of ArUco markers using OpenCV and ROS 2.
+* **Automated Error Calculation:** Calculates Root Mean Square Error (RMSE) between the robot's end-effector frame and the visual target.
+* **Dynamic Parameter Tuning:** Automatically updates the safety distance parameters in real-time based on calculated drift.
+* **Safety-Critical Design:** Implements non-blocking, multithreaded architecture to ensure collision avoidance during calibration routines.
 
-Safety-Critical Design: Implements non-blocking, multithreaded architecture to ensure collision avoidance during calibration routines.
+---
 
-Prerequisites
-Before cloning the repository, ensure you have the following installed:
+## Prerequisites
 
-OS: Ubuntu 22.04 LTS (Jammy Jellyfish)
+Before cloning the repository, ensure your environment meets the following requirements:
 
-Middleware: ROS 2 Humble Hawksbill
+* **OS:** Ubuntu 22.04 LTS (Jammy Jellyfish)
+* **ROS Distribution:** ROS 2 Humble Hawksbill
+* **Simulation:** Gazebo Classic 11
+* **Motion Planning:** MoveIt 2
+* **Dependencies:** `cv_bridge`, `image_transport`, `tf2_ros`
 
-Simulation: Gazebo Classic 11
+---
 
-Planning: MoveIt 2
+## ⚠️ Critical Setup: Gazebo Models
 
-Dependencies: cv_bridge, image_transport, tf2_ros
+**Do not skip this step.** This simulation relies on custom ArUco marker models and standard Gazebo assets. Failure to configure this will result in the simulation hanging or the markers failing to spawn.
 
-⚠️ Critical Setup: Custom Gazebo Models
-This simulation relies on custom ArUco marker models that are not included in the standard Gazebo library. You must manually install these models for the simulation to load correctly.
-Performance Tip: Download Gazebo Models Locally
-Gazebo often hangs or fails to load because it tries to download standard models (like sun, ground plane, etc.) from the internet at runtime. To fix this, download the full model database locally:
+### 1. Fix Standard Gazebo Models (Prevent Hangs)
+Gazebo often hangs while attempting to download models (Sun, Ground Plane) from the internet at runtime. Fix this by downloading the database locally:
 
-Bash
-
-# 1. Create the directory if it doesn't exist
+```bash
 mkdir -p ~/.gazebo/models
+git clone [https://github.com/osrf/gazebo_models.git](https://github.com/osrf/gazebo_models.git) ~/.gazebo/models/
+```
+Note: If ~/.gazebo/models already exists and is not empty, backup or merge the folder.
 
-# 2. Clone the official model repository
-git clone https://github.com/osrf/gazebo_models.git ~/.gazebo/models/
-
-Navigate to the models directory inside this repository.
-
-Copy the aruco_marker folder to your local Gazebo models directory.
+2. Install Custom ArUco Models
+This package contains a custom aruco_marker model required for the calibration target.
 
 Bash
 
-# Example command (adjust paths as necessary)
+# Copy the custom model from this repo to your Gazebo directory
 cp -r ~/sasc_ws/src/sasc/models/aruco_marker ~/.gazebo/models/
-Note: If the ~/.gazebo/models directory does not exist, create it using mkdir -p ~/.gazebo/models.
+Project Structure
+Plaintext
 
+sasc/
+├── launch_files/
+│   └── arm_commander.launch.py   # Main launch file for Robot + MoveIt + Gazebo
+├── models/
+│   └── aruco_marker/             # Custom SDF model for the visual target
+├── src/
+│   ├── arm_commander.cpp         # Controller node (Plan & Execute)
+│   ├── camera_reader.cpp         # Perception node (OpenCV & TF)
+│   └── error_calibration.cpp     # Logic node (RMSE Calculation)
+├── CMakeLists.txt
+└── package.xml
 Installation
-Create a Workspace (if you haven't already):
+Create a Workspace
 
 Bash
-
+Clone the Repository
+```bash
 mkdir -p ~/sasc_ws/src
 cd ~/sasc_ws/src
-Clone the Repository:
-
+```
 Bash
-
+Install Dependencies
+```bash
 git clone <YOUR_REPO_URL>
-Install Dependencies:
-
+```
 Bash
-
+Build
+```bash
 cd ~/sasc_ws
 rosdep install --from-paths src --ignore-src -r -y
-Build the Package:
-
+```
 Bash
-
+```bash
 colcon build --packages-select sasc
 source install/setup.bash
-Quick Start Guide
-To run the full self-calibration loop, you will need three separate terminal windows. Ensure you source the workspace in every terminal (source install/setup.bash).
+```
+Usage Guide
+To run the full self-calibration loop, open three separate terminals. Note: Remember to run source install/setup.bash in every terminal.
 
 Terminal 1: The "Brain" (Calibration Node)
-Start the calibration node first. It will wait for incoming data samples.
+Starts the error calculator. It will wait for data samples.
 
 Bash
-
+```bash
 ros2 run sasc error_calibration
-Expected Output: [INFO]: Calibration Node Started. Expecting Safety Distance: 0.40 meters
-
-Terminal 2: The Simulation (Gazebo & MoveIt)
-Launch the simulation environment and the robot controller.
+```
+Terminal 2: The Simulation
+Launches Gazebo, MoveIt, and the Robot State Publisher.
 
 Bash
-
+```bash
 ros2 launch sasc arm_commander.launch.py
-Wait until you see "You can start planning now!" in the MoveIt logs.
+```
+Wait for the message: "You can start planning now!"
 
-![Placeholder: Screenshot of the Gazebo Environment with Robot and ArUco Marker]
+(Placeholder: Screenshot of the Gazebo Environment with Robot and ArUco Marker)
 
 Terminal 3: The "Body" (Commander Node)
-This node will actuate the robot to track the marker.
+Sends commands to move the robot to the target.
 
 Bash
-
+```bash
 ros2 run sasc arm_commander
+```
 Verification
-Move the ArUco marker inside the Gazebo simulation.
+Move the Marker: Drag the ArUco marker to a new location in Gazebo.
 
-The robot will track and approach the marker, stopping at the safety distance.
+Observe Tracking: The robot will plan a path and stop at the defined safety_dist.
 
-After 10 samples, Terminal 1 will calculate the error and publish a correction.
+Auto-Correction: * After collecting 10 data samples, Terminal 1 will compute the drift.
 
-Terminal 3 will receive the correction and print: ✅ CALIBRATION APPLIED.
+Terminal 3 will receive the correction and print: CALIBRATION APPLIED.
 
-System Architecture
-The system consists of three primary nodes communicating over ROS 2 topics:
+Subsequent movements will have reduced systematic error.
 
-Camera Reader (camera_reader.cpp):
+Known Issues
+Robot Compatibility: Currently hardcoded for the ABB IRB 6640. Support for generic URDFs is planned for future releases.
 
-Subscribes to raw image data.
-
-Detects ArUco markers and computes the TF transform relative to the camera frame.
-
-Publishes the marker pose.
-
-Arm Commander (arm_commander.cpp):
-
-Acts as the central controller.
-
-Receives marker poses and plans trajectories using MoveIt 2.
-
-Maintains the safety_dist parameter and updates it dynamically based on feedback.
-
-Error Calibration (error_calibration.cpp):
-
-Collects a batch of position data (Robot Frame vs. Camera Frame).
-
-Computes the Root Mean Square Error (RMSE).
-
-Publishes a float correction value to /sasc/correction to close the control loop.
-
-![Placeholder: Data Flow Graph (Nodes and Topics)]
-
-Limitations & Known Issues
-Robot Compatibility: Currently hardcoded for the ABB IRB 6640. Support for generic URDFs via parameterization is planned.
-
-Tool Center Point (TCP) Offset: Users may observe a static offset (~10mm) between visual depth and kinematic depth. This is a physical offset due to the camera mounting position defined in the URDF, not a software error.
-
-<div id="top"></div>
-
-<!-- 
-
-# ===================================== COPYRIGHT ===================================== #
-#                                                                                       #
-#  IFRA (Intelligent Flexible Robotics and Assembly) Group, CRANFIELD UNIVERSITY        #
-#  Created on behalf of the IFRA Group at Cranfield University, United Kingdom          #
-#  E-mail: IFRA@cranfield.ac.uk                                                         #
-#                                                                                       #
-#  Licensed under the Apache-2.0 License.                                               #
-#  You may not use this file except in compliance with the License.                     #
-#  You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0  #
-#                                                                                       #
-#  Unless required by applicable law or agreed to in writing, software distributed      #
-#  under the License is distributed on an "as-is" basis, without warranties or          #
-#  conditions of any kind, either express or implied. See the License for the specific  #
-#  language governing permissions and limitations under the License.                    #
-#                                                                                       #
-#  IFRA Group - Cranfield University                                                    #
-#  AUTHORS: Mikel Bueno Viso - Mikel.Bueno-Viso@cranfield.ac.uk                         #
-#           Seemal Asif      - s.asif@cranfield.ac.uk                                   #
-#           Phil Webb        - p.f.webb@cranfield.ac.uk                                 #
-#                                                                                       #
-#  Date: October, 2022.                                                                 #
-#                                                                                       #
-# ===================================== COPYRIGHT ===================================== #
-
-# ======= CITE OUR WORK ======= #
-# You can cite our work with the following statement:
-# IFRA (2022) ROS2.0 ROBOT SIMULATION. URL: https://github.com/IFRA-Cranfield/ros2_RobotSimulation.
-
--->
-
-<!--
-
-  README.md TEMPLATE obtined from:
-      https://github.com/othneildrew/Best-README-Template
-      AUTHOR: OTHNEIL DREW 
-
--->
-
-<!-- HEADER -->
-<br />
-<div align="center">
-  <a>
-    <img src="media/header.jpg" alt="header" width="651" height="190.5">
-  </a>
-
-  <br />
-
-  <h2 align="center">ROS2.0 ROBOT SIMULATION - ROS2.0 Humble</h2>
-
-  <p align="center">
-    IFRA (Intelligent Flexible Robotics and Assembly) Group
-    <br />
-    Centre for Robotics and Assembly
-    <br />
-    Cranfield University
-  </p><div id="top"></div>
-
-<!-- 
-
-# ===================================== COPYRIGHT ===================================== #
-#                                                                                       #
-#  IFRA (Intelligent Flexible Robotics and Assembly) Group, CRANFIELD UNIVERSITY        #
-#  Created on behalf of the IFRA Group at Cranfield University, United Kingdom          #
-#  E-mail: IFRA@cranfield.ac.uk                                                         #
-#                                                                                       #
-#  Licensed under the Apache-2.0 License.                                               #
-#  You may not use this file except in compliance with the License.                     #
-#  You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0  #
-#                                                                                       #
-#  Unless required by applicable law or agreed to in writing, software distributed      #
-#  under the License is distributed on an "as-is" basis, without warranties or          #
-#  conditions of any kind, either express or implied. See the License for the specific  #
-#  language governing permissions and limitations under the License.                    #
-#                                                                                       #
-#  IFRA Group - Cranfield University                                                    #
-#  AUTHORS: Mikel Bueno Viso - Mikel.Bueno-Viso@cranfield.ac.uk                         #
-#           Seemal Asif      - s.asif@cranfield.ac.uk                                   #
-#           Phil Webb        - p.f.webb@cranfield.ac.uk                                 #
-#                                                                                       #
-#  Date: October, 2022.                                                                 #
-#                                                                                       #
-# ===================================== COPYRIGHT ===================================== #
-
-# ======= CITE OUR WORK ======= #
-# You can cite our work with the following statement:
-# IFRA (2022) ROS2.0 ROBOT SIMULATION. URL: https://github.com/IFRA-Cranfield/ros2_RobotSimulation.
-
--->
-
-<!--
-
-  README.md TEMPLATE obtined from:
-      https://github.com/othneildrew/Best-README-Template
-      AUTHOR: OTHNEIL DREW 
-
--->
-
-<!-- HEADER -->
-<br />
-<div align="center">
-  <a>
-    <img src="media/header.jpg" alt="header" width="651" height="190.5">
-  </a>
-
-  <br />
-
-  <h2 align="center">ROS2.0 ROBOT SIMULATION - ROS2.0 Humble</h2>
-
-  <p align="center">
-    IFRA (Intelligent Flexible Robotics and Assembly) Group
-    <br />
-    Centre for Robotics and Assembly
-    <br />
-    Cranfield University
-  </p>
-</div>
-
-
+TCP Offset: Users may observe a static offset (~10mm) between visual depth and kinematic depth. This is a physical offset due to the camera mounting position defined in the URDF, not a software error.
