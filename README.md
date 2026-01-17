@@ -58,7 +58,7 @@ Bash
 cp -r ~/sasc_ws/src/sasc/models/aruco_marker ~/.gazebo/models/
 Project Structure
 Plaintext
-
+```text
 sasc/
 ├── launch_files/
 │   └── arm_commander.launch.py   # Main launch file for Robot + MoveIt + Gazebo
@@ -70,6 +70,7 @@ sasc/
 │   └── error_calibration.cpp     # Logic node (RMSE Calculation)
 ├── CMakeLists.txt
 └── package.xml
+```
 Installation
 Create a Workspace
 
