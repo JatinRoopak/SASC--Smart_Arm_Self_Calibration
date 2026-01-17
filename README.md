@@ -1,4 +1,4 @@
-# SASC: Smart Arm Self-Calibration System
+# SASC: Smart Arm Self-Calibration 
 
 **Current Status:** Alpha (Work in Progress)  
 **Supported Platform:** ABB IRB 6640 (Simulation)  
