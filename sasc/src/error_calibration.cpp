@@ -36,7 +36,8 @@ class ErrorCalibration : public rclcpp::Node{
 
             if (count>=10){
                 calculate_accuracy();
-                rclcpp::shutdown();
+                data_history.clear();
+                RCLCPP_INFO(this->get_logger(), "Batch completed, waiting for verification....");
             }
         }
 

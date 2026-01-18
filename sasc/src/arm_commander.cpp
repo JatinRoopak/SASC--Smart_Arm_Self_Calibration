@@ -1,6 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
+#include <std_msgs/msg/float64.hpp>
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <atomic> //for the boolean operator to stop robot from listening to every target coming 
 #include <memory>
@@ -35,6 +36,13 @@ class ArmCommander : public rclcpp::Node {
                 std::bind(&ArmCommander::arm_target, this, std::placeholders::_1),
                 sub_opt //different lane for subscriber
             );
+
+            correction_subscriber = this->create_subscription<std_msgs::msg::Float64>(
+                "/sasc/correction",
+                10,
+                std::bind(&ArmCommander::correction_callback, this, std::placeholders::_1),
+                sub_opt
+            );
         }
 
         void init_moveit(const std::string & planning_group) {
@@ -57,10 +65,13 @@ class ArmCommander : public rclcpp::Node {
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr arm_target_subscriber;
         std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group;
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr calibration_publisher;
+        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr correction_subscriber;
 
         double safety_dist;
         std::atomic<bool> robotLoadUp; //flag to let the robot joint states fully loaded
         std::atomic<bool> isRobotMoving; //the busy flag
+        bool data_collected  = false; //to prevent error message spamming
+        int sample_sent = 0; //number of samples of position sended (after 10 mean is taken and error is found out)
 
         void arm_target(const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
             if(!robotLoadUp){
@@ -85,20 +96,30 @@ class ArmCommander : public rclcpp::Node {
             double dist_error = abs(desired_x - actual_x);
 
             if (dist_error < 0.1) {
-                auto data_msg = std_msgs::msg::Float64MultiArray();
-                // Robot Pose currently
-                data_msg.data.push_back(current_pose.pose.position.x);
-                data_msg.data.push_back(current_pose.pose.position.y);
-                data_msg.data.push_back(current_pose.pose.position.z);
-                // Camera Target currently 
-                data_msg.data.push_back(msg->pose.position.x);
-                data_msg.data.push_back(msg->pose.position.y);
-                data_msg.data.push_back(msg->pose.position.z);
-                
-                calibration_publisher->publish(data_msg);
+
+                if(sample_sent<50){
+                    auto data_msg = std_msgs::msg::Float64MultiArray();
+                    // Robot Pose currently
+                    data_msg.data.push_back(current_pose.pose.position.x);
+                    data_msg.data.push_back(current_pose.pose.position.y);
+                    data_msg.data.push_back(current_pose.pose.position.z);
+                    // Camera Target currently 
+                    data_msg.data.push_back(msg->pose.position.x);
+                    data_msg.data.push_back(msg->pose.position.y);
+                    data_msg.data.push_back(msg->pose.position.z);
+                    
+                    calibration_publisher->publish(data_msg);
+                    sample_sent++;
+                    RCLCPP_INFO(this->get_logger(), "Collecting Data [%d/10]...", sample_sent);
+                }
+                else{
+                    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 2000,"Batch Complete. Waiting for Clibration node to send correction....");
+                }
                 return;
             }
 
+            RCLCPP_INFO(this->get_logger(), "Target is locked with error = %.3f. Moving....", dist_error);
+            
             isRobotMoving = true;
 
             geometry_msgs::msg::PoseStamped safe_target = *msg;
@@ -115,6 +136,15 @@ class ArmCommander : public rclcpp::Node {
             }
 
             isRobotMoving = false;
+        }
+
+        void correction_callback(const std_msgs::msg::Float64::SharedPtr msg){
+            double correction_val = msg->data;
+            RCLCPP_INFO(this->get_logger(), "Correction recieved: %.5f m", correction_val);
+            safety_dist = safety_dist + correction_val;
+
+            sample_sent = 0;
+            RCLCPP_INFO(this->get_logger(), "Correction applied. Reseting data collection....");
         }
 };
 
