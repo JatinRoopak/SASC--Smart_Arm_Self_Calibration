@@ -70,8 +70,10 @@ class ArmCommander : public rclcpp::Node {
         double safety_dist;
         std::atomic<bool> robotLoadUp; //flag to let the robot joint states fully loaded
         std::atomic<bool> isRobotMoving; //the busy flag
-        bool data_collected  = false; //to prevent error message spamming
         int sample_sent = 0; //number of samples of position sended (after 10 mean is taken and error is found out)
+        bool force_move = false;
+
+        bool calibration_complete = false; //final bool to flag completition of process for launch file use
 
         void arm_target(const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
             if(!robotLoadUp){
@@ -85,6 +87,9 @@ class ArmCommander : public rclcpp::Node {
             if (isRobotMoving){
                 return;
             }
+            if (calibration_complete){
+                return;
+            }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
             RCLCPP_INFO(this->get_logger(), "Target is locked, Executing the move........");
@@ -95,7 +100,7 @@ class ArmCommander : public rclcpp::Node {
             double actual_x = current_pose.pose.position.x;
             double dist_error = abs(desired_x - actual_x);
 
-            if (dist_error < 0.1) {
+            if (dist_error < 0.1 && !force_move) {
 
                 if(sample_sent<50){
                     auto data_msg = std_msgs::msg::Float64MultiArray();
@@ -110,7 +115,7 @@ class ArmCommander : public rclcpp::Node {
                     
                     calibration_publisher->publish(data_msg);
                     sample_sent++;
-                    RCLCPP_INFO(this->get_logger(), "Collecting Data [%d/10]...", sample_sent);
+                    RCLCPP_INFO(this->get_logger(), "Collecting Data [%d/50]...", sample_sent);
                 }
                 else{
                     RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 2000,"Batch Complete. Waiting for Clibration node to send correction....");
@@ -121,6 +126,7 @@ class ArmCommander : public rclcpp::Node {
             RCLCPP_INFO(this->get_logger(), "Target is locked with error = %.3f. Moving....", dist_error);
             
             isRobotMoving = true;
+            force_move = false;
 
             geometry_msgs::msg::PoseStamped safe_target = *msg;
             safe_target.pose.position.x -= safety_dist; //adding safety distance
@@ -141,10 +147,18 @@ class ArmCommander : public rclcpp::Node {
         void correction_callback(const std_msgs::msg::Float64::SharedPtr msg){
             double correction_val = msg->data;
             RCLCPP_INFO(this->get_logger(), "Correction recieved: %.5f m", correction_val);
-            safety_dist = safety_dist + correction_val;
+            if (abs(correction_val) < 0.001){
+                RCLCPP_INFO(this->get_logger(), "Calibration completed...........");
 
+                safety_dist = safety_dist + correction_val;
+                calibration_complete = true;
+                return;
+            }
+
+            safety_dist = safety_dist + correction_val;
             sample_sent = 0;
-            RCLCPP_INFO(this->get_logger(), "Correction applied. Reseting data collection....");
+            force_move = true;
+            RCLCPP_INFO(this->get_logger(), "Correction applied.Force Relaignment....");
         }
 };
 
