@@ -21,11 +21,11 @@ class ErrorCalibration : public rclcpp::Node{
                 std::bind(&ErrorCalibration::info_callback, this, placeholders::_1)
             );
 
-            sasc_correction_publisher = this->create_publisher<std_msgs::msg::Float64>("/sasc/correction", 10);
+            sasc_correction_publisher = this->create_publisher<std_msgs::msg::Float64MultiArray>("/sasc/correction", 10);
         }
     private:
         rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr sasc_data_subscriber;
-        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr sasc_correction_publisher;
+        rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr sasc_correction_publisher;
         vector<vector<double>> data_history;
         double safety_dist;
 
@@ -43,24 +43,45 @@ class ErrorCalibration : public rclcpp::Node{
 
         void calculate_accuracy(){
             RCLCPP_INFO(this->get_logger(), "Batch of data if full. Calculating Error");
-            double total_error = 0.0;
+            double total_error_x = 0.0;
+            double total_error_y = 0.0;
+            double total_error_z = 0.0;
 
             for (const auto& row : data_history){
                 //first 3 elements in data are robot's coordinates and next 3 are camera's
                 double robot_x = row[0]; 
+                double robot_y = row[1];
+                double robot_z = row[2]; 
+
                 double cam_x = row[3];
+                double cam_y = row[4];
+                double cam_z = row[5];
 
                 double target_x = cam_x - safety_dist;
-                double error = robot_x - target_x;
-                total_error += error;
+                double error_x = robot_x - target_x;
+                total_error_x += error_x;
+
+                double target_y = cam_y ;
+                double error_y = robot_y - target_y;
+                total_error_y += error_y;
+
+                double target_z = cam_z ;
+                double error_z = robot_z - target_z;
+                total_error_z += error_z;
             }
 
-            double mean_error = total_error / data_history.size(); //publishing message
+            double mean_error_x = total_error_x / data_history.size(); //publishing message
+            double mean_error_y = total_error_y / data_history.size(); //publishing message
+            double mean_error_z = total_error_z / data_history.size(); //publishing message
 
-            auto error_message = std_msgs::msg::Float64();
-            error_message.data = mean_error;
+
+            auto error_message = std_msgs::msg::Float64MultiArray();
+            error_message.data.push_back(mean_error_x);
+            error_message.data.push_back(mean_error_y);
+            error_message.data.push_back(mean_error_z);
+
             sasc_correction_publisher->publish(error_message);
-            RCLCPP_INFO(this->get_logger(), ">> CORRECTION SENT: %.5f meters", mean_error);
+            RCLCPP_INFO(this->get_logger(), ">> CORRECTION SENT: X=%.5f, Y=%.5f, Z=%.5f", mean_error_x, mean_error_y, mean_error_z);
             std::this_thread::sleep_for(std::chrono::milliseconds(100)); //time for message to get published
 
             // double mean_error = std::sqrt(mean_squared_error);

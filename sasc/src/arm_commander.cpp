@@ -37,7 +37,7 @@ class ArmCommander : public rclcpp::Node {
                 sub_opt //different lane for subscriber
             );
 
-            correction_subscriber = this->create_subscription<std_msgs::msg::Float64>(
+            correction_subscriber = this->create_subscription<std_msgs::msg::Float64MultiArray>(
                 "/sasc/correction",
                 10,
                 std::bind(&ArmCommander::correction_callback, this, std::placeholders::_1),
@@ -65,13 +65,16 @@ class ArmCommander : public rclcpp::Node {
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr arm_target_subscriber;
         std::shared_ptr<moveit::planning_interface::MoveGroupInterface> move_group;
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr calibration_publisher;
-        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr correction_subscriber;
+        rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr correction_subscriber;
 
         double safety_dist;
+        double offset_y = 0.0;
+        double offset_z = 0.0;
+    
         std::atomic<bool> robotLoadUp; //flag to let the robot joint states fully loaded
         std::atomic<bool> isRobotMoving; //the busy flag
         int sample_sent = 0; //number of samples of position sended (after 10 mean is taken and error is found out)
-        bool force_move = false;
+        bool force_move = false; //to let robot move even if it is very close to threshhold distance  (Overrides the stop condition to apply a calibration correction)
 
         bool calibration_complete = false; //final bool to flag completition of process for launch file use
 
@@ -87,9 +90,9 @@ class ArmCommander : public rclcpp::Node {
             if (isRobotMoving){
                 return;
             }
-            if (calibration_complete){
-                return;
-            }
+            // if (calibration_complete){
+            //     return;
+            // }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
             RCLCPP_INFO(this->get_logger(), "Target is locked, Executing the move........");
@@ -102,7 +105,7 @@ class ArmCommander : public rclcpp::Node {
 
             if (dist_error < 0.1 && !force_move) {
 
-                if(sample_sent<50){
+                if(sample_sent<50){ //only allowing 50 datasets to prevent congestion
                     auto data_msg = std_msgs::msg::Float64MultiArray();
                     // Robot Pose currently
                     data_msg.data.push_back(current_pose.pose.position.x);
@@ -130,6 +133,8 @@ class ArmCommander : public rclcpp::Node {
 
             geometry_msgs::msg::PoseStamped safe_target = *msg;
             safe_target.pose.position.x -= safety_dist; //adding safety distance
+            safe_target.pose.position.y -= offset_y;
+            safe_target.pose.position.x -= offset_z;  
             safe_target.pose.orientation = current_pose.pose.orientation; //Using robot current orientation 
 
             move_group->setPoseTarget(safe_target);
@@ -144,18 +149,26 @@ class ArmCommander : public rclcpp::Node {
             isRobotMoving = false;
         }
 
-        void correction_callback(const std_msgs::msg::Float64::SharedPtr msg){
-            double correction_val = msg->data;
-            RCLCPP_INFO(this->get_logger(), "Correction recieved: %.5f m", correction_val);
-            if (abs(correction_val) < 0.001){
+        void correction_callback(const std_msgs::msg::Float64MultiArray::SharedPtr msg){
+            double correction_x = msg->data[0];
+            double correction_y = msg->data[1];
+            double correction_z = msg->data[2];
+
+            double total_error = std::sqrt(pow(correction_x, 2)+pow(correction_y, 2)+pow(correction_z, 2));
+
+            RCLCPP_INFO(this->get_logger(), "Correction recieved: %.5f m", correction_x);
+
+            if (total_error < 0.001){
                 RCLCPP_INFO(this->get_logger(), "Calibration completed...........");
 
-                safety_dist = safety_dist + correction_val;
-                calibration_complete = true;
+                safety_dist = safety_dist + correction_x;
+                offset_y += correction_y;
+                offset_z += correction_z;
+                // calibration_complete = true;
                 return;
             }
 
-            safety_dist = safety_dist + correction_val;
+            safety_dist = safety_dist + correction_x;
             sample_sent = 0;
             force_move = true;
             RCLCPP_INFO(this->get_logger(), "Correction applied.Force Relaignment....");
