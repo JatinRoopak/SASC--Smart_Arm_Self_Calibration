@@ -25,13 +25,13 @@ class ArmCommander : public rclcpp::Node {
             if (this->has_parameter("offset_y")){
                 this->get_parameter("offset_y", offset_y);
             } else{
-                offset_y = this->declare_parameter<double>("offset_y", 0.00); //safety distance parameter deafult is 0.40 
+                offset_y = this->declare_parameter<double>("offset_y", 0.00);  
             }
 
             if (this->has_parameter("offset_z")){
                 this->get_parameter("offset_z", offset_z);
             } else{
-                offset_z = this->declare_parameter<double>("offset_z", 0.00); //safety distance parameter deafult is 0.40 
+                offset_x = this->declare_parameter<double>("offset_z", 0.00); 
             }
 
             callback_group_subscriber = this->create_callback_group(
