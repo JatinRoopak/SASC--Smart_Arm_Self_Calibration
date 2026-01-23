@@ -8,7 +8,9 @@
 
 ## Overview
 
-SASC is a closed-loop perception and control framework designed to autonomously calibrate robotic manipulator positioning using visual feedback. By leveraging an eye-in-hand camera setup and ArUco markers, the system measures real-time kinematic errors (RMSE) and applies dynamic corrections to the robot's motion planning stack, eliminating control drift without manual intervention.
+SASC is a closed-loop perception and control framework designed to autonomously align industrial robotic manipulators with visual targets. Unlike open-loop systems that rely on static calibration, SASC utilizes real-time visual servoing to correct kinematic errors in 3D space (Depth, Horizontal, and Vertical).
+
+By bridging the gap between Perception (OpenCV/ArUco) and Control (MoveIt 2), the system dynamically compensates for simulated gear backlash, sensor noise, and TCP drift without manual intervention.
 
 <img width="626" height="530" alt="Screenshot from 2026-01-17 18-23-23" src="https://github.com/user-attachments/assets/e1ca0a85-ab23-4e06-9e36-6d938689fb6d" />
 
@@ -16,12 +18,34 @@ SASC is a closed-loop perception and control framework designed to autonomously 
 
 ## Key Features
 
-* **Closed-Loop Visual Servoing:** Real-time tracking of ArUco markers using OpenCV and ROS 2.
-* **Automated Error Calculation:** Calculates Root Mean Square Error (RMSE) between the robot's end-effector frame and the visual target.
-* **Dynamic Parameter Tuning:** Automatically updates the safety distance parameters in real-time based on calculated drift.
-* **Safety-Critical Design:** Implements non-blocking, multithreaded architecture to ensure collision avoidance during calibration routines.
+* **3D Kinematic Compensation:** Simultaneously corrects errors in X (Depth), Y (Horizontal), and Z (Vertical) axes to sub-millimeter precision.
+* **Closed-Loop Visual Servoing:** Implements an adaptive control loop that continuously re-evaluates the target position until the error threshold (<1mm) is met.
+* **Dynamic Configuration:** Allows users to define target grasp offsets (offset_x, offset_y, offset_z) at runtime via CLI arguments without recompiling code.
+* **Safety-Critical Architecture:** Features velocity scaling (50% limits) and non-blocking execution to prevent collisions during the approach phase.
 
 ---
+
+## System Architecture
+
+The framework consists of three synchronized ROS 2 nodes:
+
+1.  **`camera_reader` (Perception):**
+    * Detects ArUco markers via an eye-in-hand camera.
+    * Broadcasts the marker's 3D pose relative to the camera frame.
+    * Logs pose data as: `[Depth(Z) | Right(X) | Down(Y)]`.
+
+2.  **`error_calibration` (The Brain):**
+    * Subscribes to robot and camera data.
+    * Calculates the 3D error vector (RMSE) over a sampling period (10 frames).
+    * Publishes a correction vector to the commander.
+
+3.  **`arm_commander` (Control):**
+    * Interfaces with the MoveIt 2 planning pipeline.
+    * Executes motion plans based on the target position plus the dynamic error correction.
+    * Handles the safety logic and approach velocity.
+      
+---
+
 
 ## Prerequisites
 
@@ -95,34 +119,40 @@ Bash
 colcon build --packages-select sasc
 source install/setup.bash
 ```
-Usage Guide
-To run the full self-calibration loop, open three separate terminals. Note: Remember to run source install/setup.bash in every terminal.
+## Usage Guide
 
-Terminal 1: The "Brain" (Calibration Node)
-Starts the error calculator. It will wait for data samples.
+To run the full self-calibration loop, you must first launch the robot simulation (Gazebo + MoveIt) and then launch the SASC logic nodes.
 
-Bash
+### 1. Launch Robot Simulation
+First, start the robot environment (Gazebo and MoveIt Interface) in a new terminal:
+
 ```bash
-ros2 run sasc error_calibration
+ros2 launch irb6640_ros2_moveit2 irb6640_interface.launch.py
 ```
-Terminal 2: The Simulation
-Launches Gazebo, MoveIt, and the Robot State Publisher.
+Wait until the robot is fully loaded in Gazebo before proceeding.
 
-Bash
+### 2. Launch SASC System (Standard)
+In a new terminal, run the SASC control loop with the default safety distance (0.40m Depth):
+
 ```bash
-ros2 launch sasc arm_commander.launch.py
+ros2 launch sasc sasc_launch.launch.py
 ```
-Wait for the message: "You can start planning now!"
 
-(Placeholder: Screenshot of the Gazebo Environment with Robot and ArUco Marker)
+### 3. Launch with Custom Target
+You can control where the robot stops relative to the box using dynamic arguments. This allows you to test different grasping positions without changing code.
 
-Terminal 3: The "Body" (Commander Node)
-Sends commands to move the robot to the target.
+**Arguments:**
 
-Bash
-```bash
-ros2 run sasc arm_commander
+* `offset_x`: Target Depth (Forward distance from gripper to box).
+* `offset_y`: Horizontal Offset (Left/Right).
+* `offset_z`: Vertical Offset (Up/Down).
+
+**Example:** Stop 0.5m away, shifted 10cm up and 5cm right:
+
+```Bash
+ros2 launch sasc sasc_launch.launch.py offset_x:=0.50 offset_z:=0.10 offset_y:=0.05
 ```
+---
 Verification
 Move the Marker: Drag the ArUco marker to a new location in Gazebo.
 
