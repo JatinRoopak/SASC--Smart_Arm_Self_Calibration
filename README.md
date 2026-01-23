@@ -132,12 +132,12 @@ ros2 launch sasc sasc_launch.launch.py
 2. Custom Target Configuration
 You can control where the robot stops relative to the box using dynamic arguments. This allows you to test different grasping positions without changing code.
 
-Arguments:
-offset_x: Target Depth (Forward distance from gripper to box).
-offset_y: Horizontal Offset (Left/Right).
-offset_z: Vertical Offset (Up/Down).
+ **Arguments:**
+    * ```offset_x```: Target Depth (Forward distance from gripper to box).
+    * ```offset_y```: Horizontal Offset (Left/Right).
+    * ``` offset_z```: Vertical Offset (Up/Down).
 
-Example: Stop 0.5m away, shifted 10cm up and 5cm right:
+**Example:** Stop 0.5m away, shifted 10cm up and 5cm right:
 
 ```Bash
 ros2 launch sasc sasc_launch.launch.py offset_x:=0.50 offset_z:=0.10 offset_y:=0.05
