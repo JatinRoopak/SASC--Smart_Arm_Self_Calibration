@@ -15,11 +15,23 @@ class ArmCommander : public rclcpp::Node {
         ArmCommander(const rclcpp::NodeOptions & options) 
         : Node("arm_commander_node", options), robotLoadUp(false), isRobotMoving(false){
 
-            //must recieve an argument to run the custom safety_dist
-            if (this->has_parameter("safety_dist")){
-                this->get_parameter("safety_dist", safety_dist);
+            //must recieve an argument to run the custom offset_x
+            if (this->has_parameter("offset_x")){
+                this->get_parameter("offset_x", offset_x);
             } else{
-                safety_dist = this->declare_parameter<double>("safety_dist", 0.40); //safety distance parameter deafult is 0.40 
+                offset_x = this->declare_parameter<double>("offset_x", 0.40); //safety distance parameter deafult is 0.40 
+            }
+
+            if (this->has_parameter("offset_y")){
+                this->get_parameter("offset_y", offset_y);
+            } else{
+                offset_y = this->declare_parameter<double>("offset_y", 0.00); //safety distance parameter deafult is 0.40 
+            }
+
+            if (this->has_parameter("offset_z")){
+                this->get_parameter("offset_z", offset_z);
+            } else{
+                offset_z = this->declare_parameter<double>("offset_z", 0.00); //safety distance parameter deafult is 0.40 
             }
 
             callback_group_subscriber = this->create_callback_group(
@@ -67,7 +79,7 @@ class ArmCommander : public rclcpp::Node {
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr calibration_publisher;
         rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr correction_subscriber;
 
-        double safety_dist;
+        double offset_x;
         double offset_y = 0.0;
         double offset_z = 0.0;
     
@@ -99,7 +111,7 @@ class ArmCommander : public rclcpp::Node {
 
             geometry_msgs::msg::PoseStamped current_pose = move_group->getCurrentPose();
 
-            double desired_x = msg->pose.position.x-safety_dist;
+            double desired_x = msg->pose.position.x-offset_x;
             double actual_x = current_pose.pose.position.x;
             double dist_error = abs(desired_x - actual_x);
 
@@ -132,9 +144,9 @@ class ArmCommander : public rclcpp::Node {
             force_move = false;
 
             geometry_msgs::msg::PoseStamped safe_target = *msg;
-            safe_target.pose.position.x -= safety_dist; //adding safety distance
+            safe_target.pose.position.x -= offset_x; //adding safety distance
             safe_target.pose.position.y -= offset_y;
-            safe_target.pose.position.x -= offset_z;  
+            safe_target.pose.position.z -= offset_z;  
             safe_target.pose.orientation = current_pose.pose.orientation; //Using robot current orientation 
 
             move_group->setPoseTarget(safe_target);
@@ -157,18 +169,23 @@ class ArmCommander : public rclcpp::Node {
             double total_error = std::sqrt(pow(correction_x, 2)+pow(correction_y, 2)+pow(correction_z, 2));
 
             RCLCPP_INFO(this->get_logger(), "Correction recieved: %.5f m", correction_x);
+            RCLCPP_INFO(this->get_logger(), "Correction recieved: %.5f m", correction_y);
+            RCLCPP_INFO(this->get_logger(), "Correction recieved: %.5f m", correction_z);
 
             if (total_error < 0.001){
                 RCLCPP_INFO(this->get_logger(), "Calibration completed...........");
 
-                safety_dist = safety_dist + correction_x;
+                offset_x += correction_x;
                 offset_y += correction_y;
                 offset_z += correction_z;
                 // calibration_complete = true;
                 return;
             }
 
-            safety_dist = safety_dist + correction_x;
+            offset_x += correction_x;
+            offset_y += correction_y;
+            offset_z += correction_z;
+
             sample_sent = 0;
             force_move = true;
             RCLCPP_INFO(this->get_logger(), "Correction applied.Force Relaignment....");

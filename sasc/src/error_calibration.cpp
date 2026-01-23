@@ -11,9 +11,15 @@ using namespace std;
 class ErrorCalibration : public rclcpp::Node{
     public:
         ErrorCalibration() : Node("error_calibration_node"){
-            this->declare_parameter<double>("safety_dist", 0.40); //ROS parameter for safety dist ()/default is 0.40m
-            this->get_parameter("safety_dist", safety_dist);
-            // RCLCPP_INFO(this->get_logger(), "Saftey dist is set to: %.2fm", safety_dist);
+            this->declare_parameter<double>("safety_distnace_x", 0.40); //ROS parameter for safety dist ()/default is 0.40m
+            this->get_parameter("safety_distnace_x", safety_distnace_x);
+
+            this->declare_parameter<double>("safety_distnace_y", 0.00); //ROS parameter for safety dist ()/default is 0.40m
+            this->get_parameter("safety_distnace_y", safety_distnace_y);
+
+            this->declare_parameter<double>("safety_distnace_z", 0.00); //ROS parameter for safety dist ()/default is 0.40m
+            this->get_parameter("safety_distnace_z", safety_distnace_z);
+            // RCLCPP_INFO(this->get_logger(), "Saftey dist is set to: %.2fm", safety_distnace_x);
             
             sasc_data_subscriber = this->create_subscription<std_msgs::msg::Float64MultiArray>(
                 "/sasc/data",
@@ -27,7 +33,9 @@ class ErrorCalibration : public rclcpp::Node{
         rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr sasc_data_subscriber;
         rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr sasc_correction_publisher;
         vector<vector<double>> data_history;
-        double safety_dist;
+        double safety_distnace_x;
+        double safety_distnace_y;
+        double safety_distnace_z;
 
         void info_callback(const std_msgs::msg::Float64MultiArray::SharedPtr msg){
             data_history.push_back(msg->data);
@@ -48,7 +56,7 @@ class ErrorCalibration : public rclcpp::Node{
             double total_error_z = 0.0;
 
             for (const auto& row : data_history){
-                //first 3 elements in data are robot's coordinates and next 3 are camera's
+                //// Data format: [rob_x, rob_y, rob_z, cam_x, cam_y, cam_z]
                 double robot_x = row[0]; 
                 double robot_y = row[1];
                 double robot_z = row[2]; 
@@ -57,15 +65,15 @@ class ErrorCalibration : public rclcpp::Node{
                 double cam_y = row[4];
                 double cam_z = row[5];
 
-                double target_x = cam_x - safety_dist;
+                double target_x = cam_x - safety_distnace_x;
                 double error_x = robot_x - target_x;
                 total_error_x += error_x;
 
-                double target_y = cam_y ;
+                double target_y = cam_y - safety_distnace_y;
                 double error_y = robot_y - target_y;
                 total_error_y += error_y;
 
-                double target_z = cam_z ;
+                double target_z = cam_z - safety_distnace_z;
                 double error_z = robot_z - target_z;
                 total_error_z += error_z;
             }
@@ -88,7 +96,7 @@ class ErrorCalibration : public rclcpp::Node{
 
             // RCLCPP_INFO(this->get_logger(), "---------------------------------------");
             // RCLCPP_INFO(this->get_logger(), "   FINAL ACCURACY REPORT");
-            // RCLCPP_INFO(this->get_logger(), "   Safety Distance Used: %.2fm", safety_dist);
+            // RCLCPP_INFO(this->get_logger(), "   Safety Distance Used: %.2fm", safety_distnace_x);
             // RCLCPP_INFO(this->get_logger(), "   RMSE (Average Error): %.5f meters", rms);
             // RCLCPP_INFO(this->get_logger(), "   Error in mm: %.2f mm", rms * 1000.0);
             // RCLCPP_INFO(this->get_logger(), "---------------------------------------");

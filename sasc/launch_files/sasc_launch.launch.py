@@ -12,10 +12,14 @@ import os
 def generate_launch_description():
     moveit_config = MoveItConfigsBuilder("irb6640", package_name="irb6640_ros2_moveit2").to_moveit_configs()
 
-    safety_dist_arg = DeclareLaunchArgument(
-        'safety_dist',
-        default_value='0.40',
-        description="initial safety distance"
+    offset_x_arg = DeclareLaunchArgument(
+        'offset_x', default_value='0.40', description='Traget X distance (depth)'
+    )
+    offset_y_arg = DeclareLaunchArgument(
+        'offset_y', default_value='0.00', description='Traget Y distance (Horizontal)'
+    )
+    offset_z_arg = DeclareLaunchArgument(
+        'offset_z', default_value='0.00', description='Traget Z distance (Vertical)'
     )
 
     camera_node = Node(
@@ -28,7 +32,11 @@ def generate_launch_description():
         package="sasc",
         executable="error_calibration",
         output="screen",
-        parameters=[{'safety_dist': LaunchConfiguration('safety_dist')}]
+        parameters=[{
+            'safety_distnace_x': LaunchConfiguration('offset_x'),
+            'safety_distnace_y': LaunchConfiguration('offset_y'),
+            'safety_distnace_z': LaunchConfiguration('offset_z')
+        }]
     )
 
     arm_commander_node = Node(
@@ -38,12 +46,16 @@ def generate_launch_description():
         parameters=[
             moveit_config.to_dict(),
             {"use_sim_time":True},
-            {"safety_dist":LaunchConfiguration('safety_dist')}
+            {"offset_x": LaunchConfiguration('offset_x')},
+            {"offset_y": LaunchConfiguration('offset_y')},
+            {"offset_z": LaunchConfiguration('offset_z')}
         ]
     )
 
     return LaunchDescription([
-        safety_dist_arg,
+        offset_x_arg,
+        offset_y_arg,
+        offset_z_arg,
         camera_node,
         error_calibration_node,
         arm_commander_node

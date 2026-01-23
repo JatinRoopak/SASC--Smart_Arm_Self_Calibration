@@ -104,7 +104,7 @@ class CameraReader : public rclcpp::Node {
                     } catch (tf2::TransformException &ex){
                         RCLCPP_WARN(this->get_logger(), "Transform Error: %s", ex.what());
                     }
-                    RCLCPP_INFO(this->get_logger(), "Marker %d is %.3f meters away", ids[i], tvecs[i][2]);
+                    RCLCPP_INFO(this->get_logger(), "Marker %d Pos: [X: %.3f, Y: %.3f, Z: %.3f]", ids[i], tvecs[i][2], tvecs[i][0], tvecs[i][1]);
                 }
             }
             cv::imshow("3D Robot Vision", cv_ptr->image);
