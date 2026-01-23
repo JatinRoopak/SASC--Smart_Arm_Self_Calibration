@@ -91,15 +91,6 @@ class ErrorCalibration : public rclcpp::Node{
             sasc_correction_publisher->publish(error_message);
             RCLCPP_INFO(this->get_logger(), ">> CORRECTION SENT: X=%.5f, Y=%.5f, Z=%.5f", mean_error_x, mean_error_y, mean_error_z);
             std::this_thread::sleep_for(std::chrono::milliseconds(100)); //time for message to get published
-
-            // double mean_error = std::sqrt(mean_squared_error);
-
-            // RCLCPP_INFO(this->get_logger(), "---------------------------------------");
-            // RCLCPP_INFO(this->get_logger(), "   FINAL ACCURACY REPORT");
-            // RCLCPP_INFO(this->get_logger(), "   Safety Distance Used: %.2fm", safety_distnace_x);
-            // RCLCPP_INFO(this->get_logger(), "   RMSE (Average Error): %.5f meters", rms);
-            // RCLCPP_INFO(this->get_logger(), "   Error in mm: %.2f mm", rms * 1000.0);
-            // RCLCPP_INFO(this->get_logger(), "---------------------------------------");
         }
 };
 
