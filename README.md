@@ -131,14 +131,14 @@ ros2 launch irb6640_ros2_moveit2 irb6640_interface.launch.py
 ```
 Wait until the robot is fully loaded in Gazebo before proceeding.
 
-2. Launch SASC System (Standard)
+### 2. Launch SASC System (Standard)
 In a new terminal, run the SASC control loop with the default safety distance (0.40m Depth):
 
 ```bash
 ros2 launch sasc sasc_launch.launch.py
 ```
 
-3. Launch with Custom Target
+### 3. Launch with Custom Target
 You can control where the robot stops relative to the box using dynamic arguments. This allows you to test different grasping positions without changing code.
 
 **Arguments:**
