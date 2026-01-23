@@ -121,15 +121,24 @@ source install/setup.bash
 ```
 ## Usage Guide
 
-You can launch the entire system (Robot, Gazebo, MoveIt, and SASC Logic) using a single launch file.
+To run the full self-calibration loop, you must first launch the robot simulation (Gazebo + MoveIt) and then launch the SASC logic nodes.
 
-### 1. Standard Launch
-Run the system with the default safety distance (0.40m Depth, Centered X/Y):
+### 1. Launch Robot Simulation
+First, start the robot environment (Gazebo and MoveIt Interface) in a new terminal:
+
+```bash
+ros2 launch irb6640_ros2_moveit2 irb6640_interface.launch.py
+```
+Wait until the robot is fully loaded in Gazebo before proceeding.
+
+2. Launch SASC System (Standard)
+In a new terminal, run the SASC control loop with the default safety distance (0.40m Depth):
 
 ```bash
 ros2 launch sasc sasc_launch.launch.py
 ```
-2. Custom Target Configuration
+
+3. Launch with Custom Target
 You can control where the robot stops relative to the box using dynamic arguments. This allows you to test different grasping positions without changing code.
 
 **Arguments:**
