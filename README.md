@@ -168,3 +168,9 @@ Known Issues
 Robot Compatibility: Currently hardcoded for the ABB IRB 6640. Support for generic URDFs is planned for future releases.
 
 TCP Offset: Users may observe a static offset (~10mm) between visual depth and kinematic depth. This is a physical offset due to the camera mounting position defined in the URDF, not a software error.
+
+<!-- ACKNOWLEDGMENTS -->
+## References:
+
+* [IFRA (2022) ROS2.0 ROBOT SIMULATION (for robot models)](https://github.com/IFRA-Cranfield/ros2_RobotSimulation).
+* [ROS2.0 Documentation - Humble](https://docs.ros.org/en/humble/index.html).
